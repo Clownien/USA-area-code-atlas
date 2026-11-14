@@ -71,6 +71,7 @@ button:focus-visible, .seg button:focus-visible { outline: 3px solid var(--accen
 .mapbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 10px; min-width: 0; position: relative; }
 svg.map { display: block; width: 100%; height: auto; }
 .rg path { fill: var(--land); cursor: pointer; transition: fill .15s; }
+.rg.fading path, .call.fading rect { transition: fill .9s, stroke .9s; }
 .rg:hover path { fill: var(--land-hover); }
 .rg.target path, .rg.sel path { fill: var(--accent); }
 .rg.good path { fill: var(--good); }
@@ -79,9 +80,16 @@ svg.map { display: block; width: 100%; height: auto; }
 .so { fill: none; stroke: var(--border); stroke-width: 1.3; stroke-linejoin: round; pointer-events: none; vector-effect: non-scaling-stroke; }
 .ed { fill: none; stroke: var(--edge); stroke-width: .9; stroke-dasharray: 3 2.5; pointer-events: none; vector-effect: non-scaling-stroke; }
 svg.zoomed .call:not(.terr) { display: none; }
+svg.map { touch-action: pan-y; }
+svg.map.zoomed { touch-action: none; cursor: grab; }
+svg.map.dragging { cursor: grabbing; }
+.zoom select { border: 0; border-left: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 12px var(--font-body); padding: 6px 8px; cursor: pointer; }
+.zoom button.pm { font: 600 16px/1 var(--font-body); width: 32px; padding: 6px 0; }
+.zoom button.pm + button.pm { border-left: 1px solid var(--rule); }
+.maphelp { margin: 6px 4px 0; font-size: 12px; color: var(--muted); }
 .zoom { position: absolute; top: 12px; left: 12px; display: flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--panel); z-index: 1; }
 .zoom button { border: 0; background: transparent; color: var(--ink); font: 600 12px var(--font-body); padding: 6px 10px; cursor: pointer; }
-.zoom button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); }
+.zoom button:hover, .zoom select:hover { background: var(--bg); }
 .others { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; max-height: 260px; overflow: auto; }
 .others button { width: 100%; text-align: left; display: flex; gap: 10px; align-items: baseline; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: 500 13px var(--font-body); padding: 5px 6px; cursor: pointer; }
 .others button:hover { background: var(--bg); }
@@ -161,9 +169,13 @@ svg.zoomed .call:not(.terr) { display: none; }
   </header>
   <div class="board">
     <div class="mapbox" id="mapbox">
-      <div class="zoom" role="group" aria-label="Map zoom"><button id="z-us" aria-pressed="true">Whole map</button><button id="z-ne" aria-pressed="false">Zoom Northeast</button></div>
+      <div class="zoom" role="group" aria-label="Map zoom"><button class="pm" id="z-out" aria-label="Zoom out">−</button><button class="pm" id="z-in" aria-label="Zoom in">+</button>
+        <select id="z-place" aria-label="Jump to a part of the map">
+          <option value="us">Whole map</option><option value="northeast">Northeast</option><option value="nyc">New York City &amp; New Jersey</option><option value="south">South</option><option value="midwest">Midwest</option><option value="texas">Texas &amp; Oklahoma</option><option value="southwest">Southwest</option><option value="west">West Coast</option><option value="alaska">Alaska &amp; Hawaii</option>
+        </select></div>
       <svg class="map" id="map" viewBox="0 0 1065 680" role="img" aria-label="Map of the United States"></svg>
       <div class="tip" id="tip" hidden></div>
+      <p class="maphelp">Scroll or use + and − to zoom, drag to move around. After you answer, point at or tap any region to see its area codes.</p>
     </div>
     <aside class="card" id="card" aria-live="polite"></aside>
   </div>
@@ -276,38 +288,129 @@ svg.innerHTML = `<defs>${defs}</defs><g>${fills}</g><g>${edges}</g><g>${outlines
 
 const els = id => svg.querySelectorAll(`[data-r="${id}"]`);
 function mark(ids, cls) { for (const id of [].concat(ids)) els(id).forEach(e => e.classList.add(cls)); }
+function flashBad(ids) {
+  ids = [].concat(ids);
+  mark(ids, "bad");
+  setTimeout(() => {
+    for (const id of ids) els(id).forEach(e => { e.classList.add("fading"); e.classList.remove("bad"); });
+    setTimeout(() => ids.forEach(id => els(id).forEach(e => e.classList.remove("fading"))), 1000);
+  }, 1600);
+}
 function clearMarks(keepDone) {
   svg.querySelectorAll("[data-r]").forEach(e => { e.classList.remove("target", "good", "bad", "sel"); if (!keepDone) e.classList.remove("done"); });
 }
 
-// Zoom
-const VB = { us: [0, 0, 1065, 680], ne: [690, 80, 340, 217] };
-let vb = VB.us.slice(), zoomAnim;
-function zoom(which) {
-  document.getElementById("z-us").setAttribute("aria-pressed", which === "us");
-  document.getElementById("z-ne").setAttribute("aria-pressed", which === "ne");
-  svg.classList.toggle("zoomed", which === "ne");
-  const from = vb.slice(), to = VB[which], t0 = performance.now();
+// Zoom and pan: the view is a viewBox [x, y, w, h] that keeps the map's aspect ratio.
+const FULL = [0, 0, 1065, 680], AR = FULL[2] / FULL[3], MINW = 70;
+const PLACES = {"us":[0,0,1065,680],"west":[-216,3,649,414],"southwest":[5,169,469,299],"texas":[202,329,436,278],"midwest":[368,52,504,322],"south":[460,306,487,311],"northeast":[653,36,406,259],"nyc":[800,166,162,103],"alaska":[-68,404,410,262]};
+const placeSel = document.getElementById("z-place");
+let vb = FULL.slice(), goal = FULL.slice(), zoomAnim;
+function clampVB(v) {
+  let w = Math.min(FULL[2], Math.max(MINW, v[2])), h = w / AR;
+  const x = Math.min(FULL[2] - w, Math.max(0, v[0])), y = Math.min(FULL[3] - h, Math.max(0, v[1]));
+  return [x, y, w, h];
+}
+function applyVB(v) {
+  vb = clampVB(v);
+  svg.setAttribute("viewBox", vb.join(" "));
+  svg.classList.toggle("zoomed", vb[2] < FULL[2] - 1);
+}
+function animateTo(target) {
+  const from = vb.slice(), to = goal = clampVB(target), t0 = performance.now();
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   cancelAnimationFrame(zoomAnim);
   const step = now => {
     const k = reduce ? 1 : Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - k, 3);
-    vb = from.map((v, i) => v + (to[i] - v) * e);
-    svg.setAttribute("viewBox", vb.join(" "));
+    applyVB(from.map((v, i) => v + (to[i] - v) * e));
     if (k < 1) zoomAnim = requestAnimationFrame(step);
   };
   zoomAnim = requestAnimationFrame(step);
 }
-document.getElementById("z-us").onclick = () => zoom("us");
-document.getElementById("z-ne").onclick = () => zoom("ne");
+// Zoom by factor k (k < 1 zooms in) around a point given in map units
+function zoomAt(k, px, py, animate) {
+  const base = animate ? goal : vb;
+  const w2 = Math.min(FULL[2], Math.max(MINW, base[2] * k)), h2 = w2 / AR;
+  const nx = px - (px - base[0]) * (w2 / base[2]), ny = py - (py - base[1]) * (h2 / base[3]);
+  if (animate) animateTo([nx, ny, w2, h2]); else { applyVB([nx, ny, w2, h2]); goal = vb.slice(); }
+  if (w2 >= FULL[2] - 1) placeSel.value = "us";
+}
+function toMap(clientX, clientY) {
+  const r = svg.getBoundingClientRect();
+  return [vb[0] + (clientX - r.left) / r.width * vb[2], vb[1] + (clientY - r.top) / r.height * vb[3]];
+}
+document.getElementById("z-in").onclick = () => zoomAt(0.6, goal[0] + goal[2] / 2, goal[1] + goal[3] / 2, true);
+document.getElementById("z-out").onclick = () => zoomAt(1 / 0.6, goal[0] + goal[2] / 2, goal[1] + goal[3] / 2, true);
+placeSel.onchange = () => animateTo(PLACES[placeSel.value]);
+svg.addEventListener("wheel", e => {
+  e.preventDefault(); cancelAnimationFrame(zoomAnim);
+  const [px, py] = toMap(e.clientX, e.clientY);
+  zoomAt(Math.exp(e.deltaY * (e.deltaMode ? 0.05 : 0.002)), px, py, false);
+}, { passive: false });
 
-svg.addEventListener("click", e => { const t = e.target.closest("[data-r]"); if (t) onRegion(t.dataset.r); });
-svg.addEventListener("mousemove", e => {
+// Drag to pan, pinch to zoom. A drag never counts as a click on a region.
+const pointers = new Map();
+let dragged = false, pinchDist = 0;
+svg.addEventListener("pointerdown", e => {
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 1) dragged = false;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinchDist = Math.hypot(a[0] - b[0], a[1] - b[1]); }
+});
+svg.addEventListener("pointermove", e => {
+  const prev = pointers.get(e.pointerId);
+  if (!prev) return;
+  const r = svg.getBoundingClientRect();
+  if (pointers.size === 1) {
+    const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
+    if (!dragged && Math.hypot(dx, dy) < 5) return;
+    if (!svg.classList.contains("zoomed")) return;
+    if (!dragged) { dragged = true; svg.setPointerCapture(e.pointerId); svg.classList.add("dragging"); tip.hidden = true; }
+    cancelAnimationFrame(zoomAnim);
+    applyVB([vb[0] - dx / r.width * vb[2], vb[1] - dy / r.height * vb[3], vb[2], vb[3]]); goal = vb.slice();
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  } else if (pointers.size === 2) {
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    const [a, b] = [...pointers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinchDist && d) { const [px, py] = toMap((a[0] + b[0]) / 2, (a[1] + b[1]) / 2); zoomAt(pinchDist / d, px, py, false); }
+    pinchDist = d; dragged = true;
+  }
+});
+const endPointer = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinchDist = 0; if (!pointers.size) svg.classList.remove("dragging"); };
+svg.addEventListener("pointerup", endPointer);
+svg.addEventListener("pointercancel", endPointer);
+
+// Tooltip. While a question is open it never gives the answer away.
+const mapbox = document.getElementById("mapbox");
+function tipText(r) {
+  const name = r.one ? r.s : `${r.n}, ${ABBR[r.s]}`;
+  if (mode === "explore" || state.phase !== "ask") return `${name} · ${r.codes.join(" ")}`;
+  return mode === "pick" ? name : null;
+}
+let tipTimer;
+function showTip(e, r) {
+  const text = tipText(r);
+  if (!text) { tip.hidden = true; return; }
+  const box = mapbox.getBoundingClientRect();
+  tip.textContent = text; tip.hidden = false;
+  tip.style.left = Math.min(box.width - 80, Math.max(80, e.clientX - box.left)) + "px";
+  tip.style.top = (e.clientY - box.top) + "px";
+}
+svg.addEventListener("click", e => {
+  if (dragged) { dragged = false; return; }
   const t = e.target.closest("[data-r]");
-  if (!t || mode === "find" && state.phase === "ask") { tip.hidden = true; return; }
-  const r = regMap[t.dataset.r], box = document.getElementById("mapbox").getBoundingClientRect();
-  tip.textContent = r.one ? r.s : `${r.n}, ${ABBR[r.s]}`; tip.hidden = false;
-  tip.style.left = (e.clientX - box.left) + "px"; tip.style.top = (e.clientY - box.top) + "px";
+  if (!t) return;
+  const answering = mode === "explore" || state.phase === "ask";
+  onRegion(t.dataset.r);
+  if (!answering || e.pointerType === "touch") {   // taps have no hover, so show the tooltip for a moment
+    showTip(e, regMap[t.dataset.r]);
+    clearTimeout(tipTimer); tipTimer = setTimeout(() => tip.hidden = true, 2500);
+  }
+});
+svg.addEventListener("mousemove", e => {
+  if (pointers.size) return;
+  const t = e.target.closest("[data-r]");
+  if (!t) { tip.hidden = true; return; }
+  clearTimeout(tipTimer);
+  showTip(e, regMap[t.dataset.r]);
 });
 svg.addEventListener("mouseleave", () => tip.hidden = true);
 
@@ -392,11 +495,11 @@ function answerFind(id) {
   let msg;
   if (right) { mark(id, "good"); const p = scoreRight(true); msg = `<p class="feedback good">Correct. ${c.code} rings in ${where(c)}${rn ? ` (${rn})` : ""}. +${p}</p>`; }
   else if (r && r.s === c.state) {
-    mark(id, "bad"); mark(c.regions, "target"); state.misses.push(c);
+    flashBad(id); mark(c.regions, "target"); state.misses.push(c);
     const p = scoreRight(false);
     msg = `<p class="feedback bad">Right state, wrong part. ${r.n} uses ${r.codes.join(", ")}. ${c.code} covers ${rn || c.city}, in yellow. +${p}</p>`;
   } else {
-    if (id) mark(id, "bad");
+    if (id) flashBad(id);
     mark(c.regions, "target"); state.streak = 0; state.misses.push(c);
     msg = `<p class="feedback bad">${r ? `Not ${r.s}. ` : ""}${c.code} is in ${where(c)}${rn ? ` (${rn})` : ""}, in yellow.</p>`;
   }
@@ -411,7 +514,7 @@ function answerPick(btn) {
   else {
     btn.classList.add("bad"); state.streak = 0; state.misses.push(c);
     const w = codeMap[btn.dataset.c];
-    mark(w.regions, "bad");
+    flashBad(w.regions);
     const wn = regionNames(w);
     msg = `<p class="feedback bad">${w.code} belongs to ${wn ? wn + ", " + stName(w.state) : where(w)} (in red). ${c.city} uses ${c.code}.</p>`;
   }
