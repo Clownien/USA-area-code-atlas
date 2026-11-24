@@ -8,6 +8,8 @@ A map game for learning US telephone area codes, region by region.
 - **Pick the code:** a region lights up; choose its area code.
 - **Explore:** click any region to study its codes.
 
+Search any area code, city or state with the search box to see where it is on the map.
+
 Scroll, pinch or use + and − to zoom, drag to move, or jump to a part of the country from the menu. After you answer, point at any region to see its area codes.
 
 Region borders are approximate. Some of the newest overlay codes are not included.
