@@ -134,6 +134,11 @@ h1 span { color: var(--muted); font-weight: 600; }
 .wmk.capdot.target circle { fill: var(--accent); r: 3; }
 .wmk text { font: 600 11px var(--font-body); fill: var(--ink); pointer-events: none; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .groups { display: grid; gap: 14px; }
+.conts button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); border-color: var(--key); }
+.quizzes summary { cursor: pointer; }
+.qgrid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; align-items: center; margin-top: 10px; }
+.qgrid b { font: 600 13px var(--font-body); }
+.qgrid .btn { padding: 8px 10px; font-size: 13px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips button { border: 1px solid var(--rule); background: var(--bg); color: var(--ink); font: 600 13px var(--font-body); padding: 6px 11px; border-radius: 999px; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; }
 .chips button:hover { border-color: var(--ink); }
@@ -638,7 +643,7 @@ function worldStatus(c) {
   return c.n === "Antarctica" ? "ant" : "off";
 }
 function showWorld(info) {
-  tip.hidden = true; view = "world"; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
+  tip.hidden = true; view = "world"; worldCont = null; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
   worldBtn.setAttribute("aria-pressed", "true"); countryName.textContent = "Choose a country";
   document.getElementById("dial").textContent = "· World";
   let paths = "";
@@ -663,25 +668,51 @@ function worldInfo(n) {
   if (PLAY_NAMES[n]) { const k = PLAY_NAMES[n], K = COUNTRIES[k]; return { k, name: k === "cb" ? niceName(n) : K.name, dial: K.dial }; }
   return { kind: NO_CODES.has(n) ? "none" : "later", name: niceName(n), dial: DIAL[n] || "" };
 }
+// Parts of the world: the map zooms in and the panel lists that continent's playable countries.
+const CONTINENTS = [
+  ["north", "North America", ["North America"]], ["caribbean", "Caribbean", ["Caribbean"]], ["south", "South America", ["South America"]],
+  ["europe", "Europe", ["Europe"]], ["asia", "Asia & Middle East", ["Caucasus & Middle East", "Asia"]], ["africa", "Africa", ["Africa"]], ["oceania", "Oceania", ["Oceania"]],
+];
+let worldCont = null;
+function contBox(key) {
+  if (key !== "asia") return WORLD.PLACES[key];
+  // Asia: fit the map around all of its countries on screen.
+  let b = null;
+  const keys = CONTINENTS.find(c => c[0] === key)[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]);
+  for (const [n, k] of Object.entries(PLAY_NAMES)) {
+    if (!keys.includes(k) || k === "ru") continue;
+    const el = svg.querySelector(`.wc[data-w="${CSS.escape(n)}"]`); if (!el) continue;
+    const bb = el.getBBox();
+    b = b ? [Math.min(b[0], bb.x), Math.min(b[1], bb.y), Math.max(b[2], bb.x + bb.width), Math.max(b[3], bb.y + bb.height)] : [bb.x, bb.y, bb.x + bb.width, bb.y + bb.height];
+  }
+  const w = Math.max(b[2] - b[0], (b[3] - b[1]) * AR) * 1.05, h = w / AR;
+  return [(b[0] + b[2]) / 2 - w / 2, (b[1] + b[3]) / 2 - h / 2, w, h];
+}
+function showContinent(key) {
+  worldCont = key;
+  if (key) { animateTo(contBox(key)); placeSel.value = WORLD.PLACES[key] ? key : "all"; }
+  else { animateTo(FULL); placeSel.value = "all"; }
+  renderWorldCard();
+}
 function renderWorldCard(info) {
   const chip = k => `<button data-k="${k}">${COUNTRIES[k].name}<small>${COUNTRIES[k].dial}</small></button>`;
   const why = info && (info.kind === "none" ? `${info.name} has no area codes. Every phone number there has the same number of digits, and you dial it the same way anywhere in the country.`
     : info.kind === "note" ? info.text
     : info.kind === "fg" ? `French Guiana is part of France. The whole territory uses one area code, 0594, and from abroad you dial +594.`
-    : `${info.name} is not in the game yet. Its calling code is ${info.dial || "not listed here"}.`);
+    : `${info.name}: calling code ${info.dial || "not listed here"}.`);
+  const cont = CONTINENTS.find(c => c[0] === worldCont);
   card.innerHTML = `${info ? `<div class="infobox"><b>${info.name} <span class="small">${info.dial}</span></b><p class="small">${why}</p></div>` : ""}
-    <div class="infobox"><b>Capitals quiz</b><p class="small">Learn the area codes of ${Object.keys(CAPITALS).length} capital cities on the world map.</p>
-      <div class="row"><button class="btn primary" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button></div></div>
-    <div class="infobox"><b>Calling codes quiz</b><p class="small">Every country in the world, small ones too: +46 Sweden, +423 Liechtenstein, +976 Mongolia.</p>
-      <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>
-    <div><p class="label">Choose a country</p><p class="small" style="margin-top:4px">Click a country on the map or pick one below.</p></div>
-    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span></div>
-    <div class="groups">${GROUPS.map(([g, ks]) => `<div><p class="label" style="margin-bottom:6px">${g}</p><div class="chips">${ks.map(chip).join("")}</div></div>`).join("")}
-    <details class="nocodes"${info && info.kind === "none" ? " open" : ""}><summary class="label">No area codes (${NO_CODES.size + Object.keys(SMALL).length - Object.keys(SMALL_NOTES).length} countries)</summary><div class="chips quiet" style="margin-top:8px">${[...NO_CODES, ...Object.keys(SMALL).filter(n => !SMALL_NOTES[n])].sort().map(n => `<button data-none="${n}">${niceName(n)}<small>${DIAL[n] || SMALL[n]}</small></button>`).join("")}</div></details>
-    <p class="small">Every other country is on the map too: point at one to see its calling code.</p></div>`;
+    <div><p class="label">World map</p><p class="small" style="margin-top:4px">Click any country on the map, or zoom in on a part of the world:</p></div>
+    <div class="chips conts"><button data-cont="" aria-pressed="${!cont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
+    ${cont ? `<div><p class="label" style="margin-bottom:6px">Countries with area-code maps in ${cont[1]}</p><div class="chips">${cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).map(chip).join("")}</div>
+      <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></div>` : ""}
+    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>Full area-code map</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span></div>
+    <details class="quizzes"><summary class="label">Quizzes on the world map</summary>
+      <div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
+      <b>Calling codes</b><button class="btn" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></details>`;
   card.querySelectorAll("[data-k]").forEach(b => b.onclick = () => enterCountry(b.dataset.k));
   card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap, b.dataset.set));
-  card.querySelectorAll("[data-none]").forEach(b => b.onclick = () => { renderWorldCard(worldInfo(b.dataset.none)); hotWorld(b.dataset.none); });
+  card.querySelectorAll("[data-cont]").forEach(b => b.onclick = () => showContinent(b.dataset.cont || null));
 }
 function hotWorld(id) { svg.querySelectorAll(".wc.hot").forEach(e => e.classList.remove("hot")); svg.querySelectorAll(`[data-w="${CSS.escape(id)}"]`).forEach(e => e.classList.add("hot")); }
 function enterCountry(k) { setCountry(k); setMode(mode); }
