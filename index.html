@@ -83,7 +83,22 @@ h1 span { color: var(--muted); font-weight: 600; }
 .worldbtn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
 .worldbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .worldbtn[aria-pressed="true"] { background: var(--key); color: var(--key-ink); border-color: var(--key); }
-#country-sel { border: 1px solid var(--rule); background: var(--panel); color: var(--ink); font: 600 14px var(--font-body); padding: 8px 12px; border-radius: 999px; cursor: pointer; min-width: 0; }
+.cpick { position: relative; min-width: 0; }
+#country-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; min-width: 0; }
+@media (min-width: 861px) { #country-btn { min-width: 200px; } }
+#country-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#country-btn:hover { border-color: var(--ink); }
+#country-btn .chev { font-size: 16px; line-height: 1; transform: translateY(-2px); transition: transform .15s; }
+#country-btn[aria-expanded="true"] .chev { transform: translateY(2px) rotate(180deg); }
+.cpop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(360px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 12px; box-shadow: 0 14px 40px color-mix(in srgb, var(--ink) 22%, transparent); display: grid; gap: 8px; }
+#clist { list-style: none; margin: 0; padding: 0; max-height: min(55vh, 420px); overflow: auto; display: grid; gap: 1px; }
+#clist li { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+#clist li[aria-selected="true"], #clist li:hover { background: var(--bg); }
+#clist li i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+#clist li span { flex: 1; min-width: 0; }
+#clist li small { font: 500 12px var(--font-mono); color: var(--muted); }
+#clist li.group { cursor: default; font: 600 11px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 2px; }
+#clist li.group:hover { background: transparent; }
 @media (max-width: 860px) { .pickrow > * { flex: 1; } }
 .land0 { fill: color-mix(in srgb, var(--rule) 55%, var(--panel)); pointer-events: none; }
 .mk circle { fill: color-mix(in srgb, var(--land) 50%, transparent); stroke: var(--edge); stroke-width: 1.3; vector-effect: non-scaling-stroke; cursor: pointer; }
@@ -233,7 +248,14 @@ svg.map.dragging { cursor: grabbing; }
     <div class="controls">
       <div class="pickrow">
         <button class="worldbtn" id="b-world" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>World map</button>
-        <select id="country-sel" aria-label="Choose a country"></select>
+        <div class="cpick">
+          <button id="country-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="cpop"><span id="country-name">Choose a country</span><span class="chev" aria-hidden="true">⌵</span></button>
+          <div class="cpop" id="cpop" hidden>
+            <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="cq" type="search" placeholder="Search for a country or a calling code" autocomplete="off" spellcheck="false" aria-label="Search for a country" aria-controls="clist"></div>
+            <p class="small" id="ccount"></p>
+            <ul id="clist" role="listbox" aria-label="Countries"></ul>
+          </div>
+        </div>
       </div>
       <div class="tabs" role="group" aria-label="Game mode">
         <button id="m-find" aria-pressed="true">Find the region</button>
@@ -600,7 +622,7 @@ function setCountry(k) {
   if (capQ) clearTimeout(capQ.timer); capQ = null;
   tip.hidden = true; view = "country"; ck = k; C = COUNTRIES[k];
   ({ CODES, REGIONS, ABBR } = C.data); codeMap = C.codeMap; regMap = C.regMap;
-  countrySel.value = C.mini ? "" : k; worldBtn.setAttribute("aria-pressed", "false");
+  countryName.textContent = C.name; worldBtn.setAttribute("aria-pressed", "false");
   document.getElementById("dial").textContent = "· " + C.dial;
   save("aca-country", k);
   buildMap();
@@ -608,8 +630,7 @@ function setCountry(k) {
 
 // ---------- World map ----------
 let view = "world";
-const worldBtn = document.getElementById("b-world"), countrySel = document.getElementById("country-sel");
-countrySel.innerHTML = `<option value="" disabled>Choose a country</option>` + GROUPS.map(([g, ks]) => `<optgroup label="${g}">${ks.map(k => `<option value="${k}">${COUNTRIES[k].name}</option>`).join("")}</optgroup>`).join("");
+const worldBtn = document.getElementById("b-world"), countryName = document.getElementById("country-name");
 function worldStatus(c) {
   if (PLAY_NAMES[c.n]) return "play";
   if (WORLD.caps.some(x => x.n === c.n) || c.n === "N. Cyprus" || c.n === "W. Sahara") return "one";
@@ -618,7 +639,7 @@ function worldStatus(c) {
 }
 function showWorld(info) {
   tip.hidden = true; view = "world"; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
-  worldBtn.setAttribute("aria-pressed", "true"); countrySel.value = "";
+  worldBtn.setAttribute("aria-pressed", "true"); countryName.textContent = "Choose a country";
   document.getElementById("dial").textContent = "· World";
   let paths = "";
   for (const c of WORLD.countries) {
@@ -629,7 +650,6 @@ function showWorld(info) {
   paths += `<g class="wmk" data-w="carib"><circle cx="${cx}" cy="${cy}" r="5"/><text x="${cx + 8}" y="${cy + 4}">Caribbean</text></g>`;
   paths += `<g class="wmk" data-w="fguiana"><circle cx="${gx}" cy="${gy}" r="3.5"/></g>`;
   for (const m of WORLD.small) paths += `<g class="wmk small" data-w="${m.n}"><circle cx="${m.x}" cy="${m.y}" r="2.6"/></g>`;
-  for (const c of WORLD.caps) paths += `<g class="wmk capdot" data-w="${c.n}" data-cap-city="${c.city}"><circle cx="${c.x}" cy="${c.y}" r="2.4"/><text x="${c.x + 4}" y="${c.y + 3}">${c.code}</text></g>`;
   svg.innerHTML = paths;
   svg.setAttribute("aria-label", "World map. Choose a country");
   setFrame(WORLD.W, WORLD.H, WORLD.PLACES, { all: "Whole world", americas: "The Americas", north: "North America", caribbean: "Caribbean", south: "South America", europe: "Europe", asia: "Asia", africa: "Africa", oceania: "Oceania" });
@@ -655,7 +675,7 @@ function renderWorldCard(info) {
     <div class="infobox"><b>Calling codes quiz</b><p class="small">Every country in the world, small ones too: +46 Sweden, +423 Liechtenstein, +976 Mongolia.</p>
       <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>
     <div><p class="label">Choose a country</p><p class="small" style="margin-top:4px">Click a country on the map or pick one below.</p></div>
-    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span><span><i style="background:var(--ink);border-radius:50%"></i>Capital with a known code</span></div>
+    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span></div>
     <div class="groups">${GROUPS.map(([g, ks]) => `<div><p class="label" style="margin-bottom:6px">${g}</p><div class="chips">${ks.map(chip).join("")}</div></div>`).join("")}
     <details class="nocodes"${info && info.kind === "none" ? " open" : ""}><summary class="label">No area codes (${NO_CODES.size + Object.keys(SMALL).length - Object.keys(SMALL_NOTES).length} countries)</summary><div class="chips quiet" style="margin-top:8px">${[...NO_CODES, ...Object.keys(SMALL).filter(n => !SMALL_NOTES[n])].sort().map(n => `<button data-none="${n}">${niceName(n)}<small>${DIAL[n] || SMALL[n]}</small></button>`).join("")}</div></details>
     <p class="small">Every other country is on the map too: point at one to see its calling code.</p></div>`;
@@ -845,7 +865,47 @@ function capAdvance() {
 }
 
 worldBtn.onclick = () => showWorld();
-countrySel.onchange = () => { if (countrySel.value) enterCountry(countrySel.value); };
+// ---------- Country picker (⌵): every country, with a search bar ----------
+const cBtn = document.getElementById("country-btn"), cPop = document.getElementById("cpop"), cIn = document.getElementById("cq"), cList = document.getElementById("clist");
+let cItems = [], cActive = 0;
+function allCountries() {
+  const out = [], seen = new Set();
+  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, dial: COUNTRIES[k].dial, kind: "play", go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
+  for (const c of WORLD.countries) {
+    if (PLAY_NAMES[c.n] || c.n === "Antarctica" || c.n === "Fr. S. Antarctic Lands") continue;
+    const st = worldStatus(c), nm = niceName(c.n);
+    if (seen.has(nm)) continue; seen.add(nm);
+    out.push({ name: nm, dial: capDial(c.n) || "", kind: st === "one" ? "one" : "none", go: () => { const k = ensureMini(c.n); if (k) { setCountry(k); setMode("explore"); } } });
+  }
+  for (const n of Object.keys(SMALL)) if (!seen.has(n)) out.push({ name: n, dial: SMALL[n], kind: "none", go: () => { showWorld(worldInfo(n)); hotWorld(n); } });
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+const KIND_COLOR = { play: "color-mix(in srgb, var(--good) 50%, var(--land))", one: "color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))", none: "color-mix(in srgb, var(--rule) 70%, var(--panel))" };
+function renderCList() {
+  const q = norm(cIn.value.trim()), all = allCountries();
+  cItems = q ? all.filter(c => norm(c.name).includes(q) || c.dial.replace(/\s/g, "").startsWith(q.replace(/\s/g, "")) || ("+" + q) === c.dial)
+             .sort((a, b) => (norm(b.name).startsWith(q) - norm(a.name).startsWith(q)) || a.name.localeCompare(b.name)) : all;
+  cActive = 0;
+  document.getElementById("ccount").textContent = q ? `${cItems.length} match${cItems.length === 1 ? "" : "es"}` : `${all.length} countries and territories · green ones have full area-code maps`;
+  cList.innerHTML = cItems.length ? cItems.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === 0}"><i style="background:${KIND_COLOR[c.kind]}"></i><span>${c.name}</span><small>${c.dial}</small></li>`).join("")
+    : `<li class="group">No country matches “${cIn.value.replace(/[<>&"]/g, "")}”</li>`;
+}
+function openCPop() { cPop.hidden = false; cBtn.setAttribute("aria-expanded", "true"); cIn.value = ""; renderCList(); cIn.focus(); }
+function closeCPop() { cPop.hidden = true; cBtn.setAttribute("aria-expanded", "false"); }
+function chooseC(i) { const c = cItems[i]; if (!c) return; closeCPop(); c.go(); }
+cBtn.onclick = () => (cPop.hidden ? openCPop() : closeCPop());
+cIn.addEventListener("input", renderCList);
+cIn.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault(); if (!cItems.length) return;
+    cActive = (cActive + (e.key === "ArrowDown" ? 1 : -1) + cItems.length) % cItems.length;
+    cList.querySelectorAll("li[role=option]").forEach((li, k) => li.setAttribute("aria-selected", k === cActive));
+    document.getElementById("co-" + cActive).scrollIntoView({ block: "nearest" });
+  } else if (e.key === "Enter") { e.preventDefault(); chooseC(cActive); }
+  else if (e.key === "Escape") { closeCPop(); cBtn.focus(); }
+});
+cList.addEventListener("click", e => { const li = e.target.closest("li[data-i]"); if (li) chooseC(+li.dataset.i); });
+document.addEventListener("pointerdown", e => { if (!cPop.hidden && !e.target.closest(".cpick")) closeCPop(); });
 
 const els = id => svg.querySelectorAll(`[data-r="${id}"]`);
 function mark(ids, cls) { for (const id of [].concat(ids)) els(id).forEach(e => e.classList.add(cls)); }
@@ -1148,7 +1208,7 @@ function detailHTML(id, hit) {
     <ul class="codes">${codes.map(c => `<li${c.code === hit ? ' class="hit"' : ""}><code>${c.code}</code><span>${c.city.startsWith("All of ") ? "Whole " + C.unit : c.city}</span></li>`).join("")}</ul>
     ${codes.length > 1 ? `<p class="small">These codes overlap: they all cover this same area, so neighbors can have different codes.</p>` : ""}
     ${others.length ? `<div><p class="label" style="margin-bottom:6px">Other parts of ${r.s}</p><ul class="others">${others.map(o => `<li><button data-go="${o.id}"><code>${o.codes.join(" ")}</code><span>${o.n}</span></button></li>`).join("")}</ul></div>` : ""}
-    <p class="small">${C.note}${C.mini ? "" : " Region borders are approximate."}</p>`;
+    <p class="small">${C.note}${C.mini || /approximate/.test(C.note) ? "" : " Region borders are approximate."}</p>`;
 }
 function bindGo(root, fn) { root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => fn(b.dataset.go)); }
 function explore(id, hit) {
