@@ -13,39 +13,49 @@
 <style>
 /* Layout: a switchboard console. Map fills the left, the call card sits right; on phones the card stacks above the map. */
 :root {
-  --bg: #e9eeea;
-  --panel: #fbfcfa;
-  --ink: #13221d;
-  --muted: #56675f;
-  --rule: #cdd8d1;
-  --land: #c3d3ca;
-  --land-hover: #9fb9ab;
-  --border: #f7faf8;
-  --edge: #7f9a8c;
-  --accent: #f0b100;
-  --accent-ink: #2a1f00;
-  --good: #1d8656;
-  --bad: #c43d2b;
-  --key: #13221d;
-  --key-ink: #f4f7f5;
+  --bg: #f2f4f7;
+  --panel: #ffffff;
+  --ink: #15202b;
+  --muted: #5f6c7b;
+  --rule: #e2e7ed;
+  --land: #d6e4de;
+  --land-hover: #b4cfc3;
+  --border: #ffffff;
+  --edge: #8fb3a3;
+  --accent: #ffb21e;
+  --accent-ink: #2b1d00;
+  --good: #17a06b;
+  --bad: #e5484d;
+  --key: #15202b;
+  --key-ink: #ffffff;
+  --water: #eaf2f8;
+  --w-play: #4fae86;
+  --w-one: #a9d8bf;
+  --w-none: #dde3e9;
+  --w-gold: #f2b92b;
+  --shadow: 0 1px 2px rgba(21, 32, 43, .06), 0 10px 28px rgba(21, 32, 43, .07);
   --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif, "Noto Color Emoji";
   --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif, "Noto Color Emoji";
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e1513; --panel: #15201c; --ink: #e5eee9; --muted: #8ea29a; --rule: #263631;
-    --land: #2b3d37; --land-hover: #3e5850; --border: #0e1513; --edge: #587a6f;
-    --accent: #f4c13a; --accent-ink: #231a00; --good: #3cc386; --bad: #ef6b58;
-    --key: #e5eee9; --key-ink: #0e1513;
+    --bg: #0e141b; --panel: #161e27; --ink: #e7edf3; --muted: #93a1b1; --rule: #253141;
+    --land: #23413a; --land-hover: #2f5a4f; --border: #161e27; --edge: #4e7f70;
+    --accent: #ffc247; --accent-ink: #231800; --good: #3dd68c; --bad: #ff6b6e;
+    --key: #e7edf3; --key-ink: #0e141b; --water: #111b25;
+    --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e1513; --panel: #15201c; --ink: #e5eee9; --muted: #8ea29a; --rule: #263631;
-  --land: #2b3d37; --land-hover: #3e5850; --border: #0e1513; --edge: #587a6f;
-  --accent: #f4c13a; --accent-ink: #231a00; --good: #3cc386; --bad: #ef6b58;
-  --key: #e5eee9; --key-ink: #0e1513;
+  --bg: #0e141b; --panel: #161e27; --ink: #e7edf3; --muted: #93a1b1; --rule: #253141;
+  --land: #23413a; --land-hover: #2f5a4f; --border: #161e27; --edge: #4e7f70;
+  --accent: #ffc247; --accent-ink: #231800; --good: #3dd68c; --bad: #ff6b6e;
+  --key: #e7edf3; --key-ink: #0e141b; --water: #111b25;
+  --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -261,6 +271,67 @@ svg.map.dragging { cursor: grabbing; }
 .small { font-size: 13px; color: var(--muted); margin: 0; }
 @media (max-width: 420px) { .keys span { width: 62px; height: 74px; font-size: 44px; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---- Refined look: white cards on a cool grey page, a light blue sea behind the maps ---- */
+h1 span { color: var(--good); }
+.mapbox { background: var(--water); border: 1px solid var(--rule); border-radius: 18px; box-shadow: var(--shadow); }
+.card { border-radius: 18px; box-shadow: var(--shadow); gap: 18px; }
+.tabs, .worldbtn, #country-btn { box-shadow: var(--shadow); border-color: var(--rule); }
+.tabs { padding: 4px; }
+.tabs button { transition: background .15s, color .15s; }
+.tabs button:hover:not([aria-pressed="true"]) { background: var(--bg); }
+.zoom { border-radius: 10px; box-shadow: var(--shadow); }
+.btn { border-radius: 12px; font-weight: 600; transition: background .15s, border-color .15s; }
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.btn.primary:hover { background: color-mix(in srgb, var(--ink) 85%, var(--good)); }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn.quiet { background: transparent; color: var(--muted); }
+.seg { border-radius: 12px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.keys span { border-radius: 14px; background: linear-gradient(180deg, color-mix(in srgb, var(--key) 88%, var(--panel)), var(--key)); box-shadow: 0 6px 14px color-mix(in srgb, var(--key) 22%, transparent), inset 0 -4px 0 color-mix(in srgb, var(--key-ink) 14%, transparent); }
+.progress { height: 8px; border-radius: 4px; background: var(--bg); }
+.progress i { background: linear-gradient(90deg, var(--good), color-mix(in srgb, var(--good) 60%, var(--accent))); border-radius: 4px; }
+.feedback { border-radius: 12px; }
+.feedback.good { background: color-mix(in srgb, var(--good) 13%, var(--panel)); color: var(--ink); }
+.feedback.bad { background: color-mix(in srgb, var(--bad) 11%, var(--panel)); color: var(--ink); }
+.infobox { border-radius: 14px; background: var(--bg); }
+.chips button { background: var(--panel); border-color: var(--rule); transition: border-color .15s, background .15s; }
+.chips button:hover { border-color: var(--good); background: color-mix(in srgb, var(--good) 7%, var(--panel)); }
+.conts button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.clist summary { background: var(--panel); }
+.legend i { border-radius: 50%; }
+/* World map colors */
+.wc { stroke: var(--water); stroke-width: .7; }
+.wc.play { fill: var(--w-play); }
+.wc.play:hover, .wc.play.hot { fill: color-mix(in srgb, var(--w-play) 75%, var(--ink)); }
+.wc.gold { fill: var(--w-gold); cursor: pointer; }
+.wc.gold:hover, .wc.gold.hot { fill: color-mix(in srgb, var(--w-gold) 80%, var(--ink)); }
+.wc.one { fill: var(--w-one); }
+.wc.one:hover, .wc.one.hot { fill: color-mix(in srgb, var(--w-one) 75%, var(--ink)); }
+.wc.info, .wc.off { fill: var(--w-none); }
+.wc.info:hover, .wc.info.hot, .wc.off:hover { fill: color-mix(in srgb, var(--w-none) 85%, var(--ink)); }
+.wmk circle { fill: var(--w-play); stroke: var(--water); }
+.wmk.small circle { fill: var(--w-none); stroke: color-mix(in srgb, var(--w-none) 70%, var(--ink)); }
+.wmk text { stroke: var(--water); }
+/* Country maps */
+.rg.done path { fill: color-mix(in srgb, var(--good) 45%, var(--land)); }
+.so { stroke: var(--panel); }
+.call rect { fill: var(--panel); stroke: var(--rule); }
+@media (max-width: 520px) { .tabs[aria-label="Game mode"] button:last-child:nth-child(odd) { grid-column: span 2; } }
+.keys.k5 { gap: 6px; }
+.keys.k5 span { width: 50px; height: 66px; font-size: 36px; }
+.meta { gap: 8px; }
+.meta div { min-width: 0; }
+.meta .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) { .keys.k4 span { width: 54px; height: 68px; font-size: 38px; } .keys.k5 span { width: 46px; height: 60px; font-size: 32px; } }
+/* Complete tab */
+.trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
+.trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
+.trophy .big { font-size: 34px; }
+@keyframes pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+.tfoot { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.confirm { display: grid; gap: 8px; background: color-mix(in srgb, var(--bad) 8%, var(--panel)); border-radius: 12px; padding: 10px 12px; }
 </style>
 <style>:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 </head>
@@ -288,6 +359,7 @@ svg.map.dragging { cursor: grabbing; }
       <div class="tabs" role="group" aria-label="Game mode">
         <button id="m-find" aria-pressed="true">Find the region</button>
         <button id="m-pick" aria-pressed="false">Pick the code</button>
+        <button id="m-test" aria-pressed="false">Complete</button>
         <button id="m-explore" aria-pressed="false">Explore</button>
         <button id="m-search" aria-pressed="false">Search</button>
       </div>
@@ -665,7 +737,7 @@ function setCountry(k) {
 let view = "world";
 const worldBtn = document.getElementById("b-world"), countryName = document.getElementById("country-name");
 function worldStatus(c) {
-  if (PLAY_NAMES[c.n]) return "play";
+  if (PLAY_NAMES[c.n]) return isComplete(PLAY_NAMES[c.n]) ? "gold" : "play";
   if (WORLD.caps.some(x => x.n === c.n) || c.n === "N. Cyprus" || c.n === "W. Sahara") return "one";
   if (NO_CODES.has(c.n) || NOTES[c.n]) return "info";
   return c.n === "Antarctica" ? "ant" : "off";
@@ -722,21 +794,21 @@ function showContinent(key) {
   else { animateTo(FULL); placeSel.value = "all"; }
   renderWorldCard();
 }
-function renderWorldCard(info, needCountry) {
-  const chip = k => `<button data-k="${k}">${fl(flagKey(k))}${COUNTRIES[k].name}<small>${COUNTRIES[k].dial}</small></button>`;
+function renderWorldCard(info) {
+  const chip = k => `<button data-k="${k}">${fl(flagKey(k))}${COUNTRIES[k].name}${isComplete(k) ? " 🏆" : ""}<small>${COUNTRIES[k].dial}</small></button>`;
   const why = info && (info.kind === "none" ? `${info.name} has no area codes. Every phone number there has the same number of digits, and you dial it the same way anywhere in the country.`
     : info.kind === "note" ? info.text
     : info.kind === "fg" ? `French Guiana is part of France. The whole territory uses one area code, 0594, and from abroad you dial +594.`
     : `${info.name}: calling code ${info.dial || "not listed here"}.`);
   const cont = CONTINENTS.find(c => c[0] === worldCont);
-  card.innerHTML = `${needCountry ? `<div class="infobox notice" role="status"><b>Choose a country first</b><p class="small">“${needCountry}” works inside a country. Click a green country on the map, choose a continent below, or use the ⌵ list at the top, and it starts there.</p></div>` : ""}${info ? `<div class="infobox"><b>${fl(flagOf(info.name) || flagOf(Object.keys(NICE).find(k => NICE[k] === info.name) || ""))}${info.name} <span class="small">${info.dial}</span></b>${info.kind === "none" ? `<p class="small">No area codes</p>` : `<p class="small">${why}</p>`}</div>` : ""}
+  card.innerHTML = `${info ? `<div class="infobox"><b>${fl(flagOf(info.name) || flagOf(Object.keys(NICE).find(k => NICE[k] === info.name) || ""))}${info.name} <span class="small">${info.dial}</span></b>${info.kind === "none" ? `<p class="small">No area codes</p>` : `<p class="small">${why}</p>`}</div>` : ""}
     <div><p class="label">World map</p><p class="small" style="margin-top:4px">Click any country on the map, or zoom in on a part of the world:</p></div>
     <div class="chips conts"><button data-cont="" aria-pressed="${!cont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
     ${cont ? (() => { const ks = cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).sort((a, b) => COUNTRIES[a].name.localeCompare(COUNTRIES[b].name));
       return `<details class="clist"><summary><span>Countries with area-code maps in ${cont[1]} (${ks.length})</span><span class="chev" aria-hidden="true">⌵</span></summary>
       <div class="chips" style="margin-top:10px">${ks.map(chip).join("")}</div>
       <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></details>`; })() : ""}
-    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>Full area-code map</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span></div>
+    <div class="legend"><span><i style="background:var(--w-play)"></i>Full area-code map</span><span><i style="background:var(--w-one)"></i>One code for the whole country</span><span><i style="background:var(--w-none)"></i>No area codes</span>${completed.size ? `<span><i style="background:var(--w-gold)"></i>Completed 🏆</span>` : ""}</div>
     <details class="quizzes"><summary class="label">Quizzes on the world map</summary>
       <div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
       <b>Calling codes</b><button class="btn" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></details>`;
@@ -931,7 +1003,7 @@ const cBtn = document.getElementById("country-btn"), cPop = document.getElementB
 let cItems = [], cActive = 0;
 function allCountries() {
   const out = [], seen = new Set();
-  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, flag: flagKey(k), dial: COUNTRIES[k].dial, kind: "play", go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
+  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, flag: flagKey(k), dial: COUNTRIES[k].dial, kind: "play", done: isComplete(k), go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
   for (const c of WORLD.countries) {
     if (PLAY_NAMES[c.n] || c.n === "Antarctica" || c.n === "Fr. S. Antarctic Lands") continue;
     const st = worldStatus(c), nm = niceName(c.n);
@@ -941,14 +1013,14 @@ function allCountries() {
   for (const n of Object.keys(SMALL)) if (!seen.has(n)) out.push({ name: n, flag: flagOf(n), dial: SMALL[n], kind: "none", go: () => { showWorld(worldInfo(n)); hotWorld(n); } });
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
-const KIND_COLOR = { play: "color-mix(in srgb, var(--good) 50%, var(--land))", one: "color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))", none: "color-mix(in srgb, var(--rule) 70%, var(--panel))" };
+const KIND_COLOR = { play: "var(--w-play)", one: "var(--w-one)", none: "var(--w-none)", done: "var(--w-gold)" };
 function renderCList() {
   const q = norm(cIn.value.trim()), all = allCountries();
   cItems = q ? all.filter(c => norm(c.name).includes(q) || c.dial.replace(/\s/g, "").startsWith(q.replace(/\s/g, "")) || ("+" + q) === c.dial)
              .sort((a, b) => (norm(b.name).startsWith(q) - norm(a.name).startsWith(q)) || a.name.localeCompare(b.name)) : all;
   cActive = 0;
   document.getElementById("ccount").textContent = q ? `${cItems.length} match${cItems.length === 1 ? "" : "es"}` : `${all.length} countries and territories · green ones have full area-code maps`;
-  cList.innerHTML = cItems.length ? cItems.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === 0}"><i style="background:${KIND_COLOR[c.kind]}"></i><span>${fl(c.flag)}${c.name}</span><small>${c.dial}</small></li>`).join("")
+  cList.innerHTML = cItems.length ? cItems.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === 0}"><i style="background:${KIND_COLOR[c.done ? "done" : c.kind]}"></i><span>${fl(c.flag)}${c.name}${c.done ? " 🏆" : ""}</span><small>${c.dial}</small></li>`).join("")
     : `<li class="group">No country matches “${cIn.value.replace(/[<>&"]/g, "")}”</li>`;
 }
 function openCPop() { cPop.hidden = false; cBtn.setAttribute("aria-expanded", "true"); cIn.value = ""; renderCList(); cIn.focus(); }
@@ -1240,7 +1312,7 @@ function bindPool() {
   card.querySelector("#p-all").onclick = () => { pool = "all"; save("aca-pool", pool); newGame(); };
   bindArea();
 }
-const keys = code => `<div class="keys pop${code.length > 3 ? " k4" : ""}" aria-label="Area code ${code}">${[...code].map(d => `<span>${d}</span>`).join("")}</div>`;
+const keys = code => `<div class="keys pop${code.length > 4 ? " k5" : code.length > 3 ? " k4" : ""}" aria-label="Area code ${code}">${[...code].map(d => `<span>${d}</span>`).join("")}</div>`;
 
 function ask() {
   if (!state.qs.length) { card.innerHTML = `<p class="label">${C.name}</p><p class="q">No codes to play</p><p class="hint">All the chosen areas are empty. Choose at least one area below.</p>${poolSeg()}`; bindPool(); return; }
@@ -1273,6 +1345,7 @@ function onRegion(id) {
   if (mode === "explore") return explore(id);
   if (mode === "search") return showDetail(id);
   if (mode === "find" && state.phase === "ask") answerFind(id);
+  if (mode === "test" && state.phase === "ask") testAnswer(id);
 }
 
 function scoreRight(full) {
@@ -1485,29 +1558,110 @@ function showDetail(id, hit) {
   bindGo(d, x => showDetail(x));
 }
 
+// ---------- Complete a country: place every single code correctly ----------
+// No areas and no big-city filter here: every code in the country is asked until all are right.
+// Wrong answers come back a few questions later. Progress is saved per country.
+const MODES = ["find", "pick", "test", "explore", "search"];
+const doneKey = () => "aca-done-" + ck;
+const completed = new Set(load("aca-completed") || []);
+const isComplete = k => completed.has(k);
+function regionDone(r, done) { return r.codes.every(c => done.has(c)); }
+function paintDone(done) {
+  for (const r of REGIONS) els(r.id).forEach(e => e.classList.toggle("done", regionDone(r, done)));
+}
+function newTest(restart) {
+  clearMarks();
+  const done = new Set(restart ? [] : (load(doneKey()) || []).filter(c => codeMap[c]));
+  if (restart) { save(doneKey(), []); completed.delete(ck); save("aca-completed", [...completed]); }
+  state = { test: true, done, queue: shuffle(CODES.filter(c => !done.has(c.code))), mistakes: 0, streak: 0, phase: "ask", confirm: false };
+  paintDone(done);
+  testAsk();
+}
+function testHeader() {
+  const t = state, n = CODES.length, d = t.done.size;
+  return `<div class="meta"><div><p class="label">Placed</p><b>${d}/${n}</b></div><div><p class="label">Left</p><b>${n - d}</b></div><div><p class="label">Streak</p><b>${t.streak}</b></div><div><p class="label">Mistakes</p><b>${t.mistakes}</b></div></div>
+  <div class="progress"><i style="width:${d / n * 100}%"></i></div>`;
+}
+function testFoot() {
+  return state.confirm
+    ? `<div class="confirm"><p class="small">Start over? Your progress in ${C.name} will be erased.</p><div class="row"><button class="btn danger" id="t-yes">Yes, start over</button><button class="btn" id="t-no">Keep my progress</button></div></div>`
+    : `<p class="small">Every code in ${C.name} is asked, all of them, until each one is right. Missed codes come back later. Your progress is saved.</p><div class="row"><button class="btn quiet" id="t-reset">Start over</button></div>`;
+}
+function bindTestFoot() {
+  const y = card.querySelector("#t-yes"), n = card.querySelector("#t-no"), r = card.querySelector("#t-reset");
+  if (y) y.onclick = () => newTest(true);
+  if (n) n.onclick = () => { state.confirm = false; state.phase === "over" ? testFinish() : testAsk(); };
+  if (r) r.onclick = () => { state.confirm = true; const f = card.querySelector(".tfoot"); f.innerHTML = testFoot(); bindTestFoot(); };
+}
+function testAsk() {
+  clearMarks(true); paintDone(state.done);
+  if (!state.queue.length) return testFinish();
+  state.phase = "ask";
+  const c = state.queue[0];
+  card.innerHTML = `${testHeader()}<p class="label" style="text-align:center">Complete ${fl(flagKey(ck))}${C.name}</p>${keys(c.code)}
+    <p class="q">Where does this area code ring?</p><p class="hint">Click the region on the map. Green parts are already done.</p>
+    <div class="row"><button class="btn" id="t-skip">Skip for now</button></div><div class="tfoot">${testFoot()}</div>`;
+  card.querySelector("#t-skip").onclick = () => { state.queue.push(state.queue.shift()); state.streak = 0; testAsk(); };
+  bindTestFoot();
+}
+function testAnswer(id) {
+  const t = state, c = t.queue[0], r = regMap[id];
+  t.phase = "shown";
+  const right = r && r.codes.includes(c.code);
+  let msg;
+  if (right) {
+    t.done.add(c.code); t.queue.shift(); t.streak++;
+    save(doneKey(), [...t.done]);
+    mark(c.regions, "good");
+    msg = `<p class="feedback good">Correct. ${c.code} is ${fullPlace(c)}.</p>`;
+  } else {
+    t.mistakes++; t.streak = 0;
+    if (id) flashBad(id);
+    mark(c.regions, "target");
+    t.queue.shift(); t.queue.splice(Math.min(3, t.queue.length), 0, c);
+    msg = `<p class="feedback bad">${r ? `Not ${r.n} (${r.codes.join(", ")}). ` : ""}${c.code} is ${fullPlace(c)}, in yellow. It will come back soon.</p>`;
+  }
+  card.querySelector(".meta").outerHTML = testHeader().split('<div class="progress">')[0];
+  card.querySelector(".progress").outerHTML = '<div class="progress">' + testHeader().split('<div class="progress">')[1];
+  card.querySelector(".hint").outerHTML = msg;
+  card.querySelector(".row").outerHTML = `<div class="row"><button class="btn primary" id="t-next">${t.queue.length ? "Next code" : "Finish"}</button></div>`;
+  const next = card.querySelector("#t-next"); next.focus({ preventScroll: true });
+  const go = () => { clearTimeout(t.timer); if (t.phase === "shown") testAsk(); };
+  next.onclick = go;
+  if (right) t.timer = setTimeout(go, 1100);
+}
+function testFinish() {
+  state.phase = "over";
+  if (!completed.has(ck)) { completed.add(ck); save("aca-completed", [...completed]); }
+  paintDone(state.done);
+  card.innerHTML = `<div class="trophy"><span aria-hidden="true">🏆</span><p class="label">Country completed</p><p class="big">${fl(flagKey(ck))}${C.name}</p>
+    <p class="q">You placed all ${CODES.length} area codes${state.mistakes ? ` with ${state.mistakes} mistake${state.mistakes > 1 ? "s" : ""} along the way` : " without a single mistake"}.</p></div>
+    <p class="small">${C.name} now has a 🏆 in the country lists and is gold on the world map.</p>
+    <div class="row"><button class="btn primary" id="t-world">Pick another country</button></div><div class="tfoot">${testFoot()}</div>`;
+  card.querySelector("#t-world").onclick = () => showWorld();
+  bindTestFoot();
+}
+
 // ---------- Modes and countries ----------
 function setMode(m) {
   setTimeout(applyAreaDim);
   if (view === "world") {
-    // On the world map only Search works right away; the other modes need a country first.
     mode = m;
-    for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
-    if (m === "search") { state = {}; searchPick = null; renderSearch().focus({ preventScroll: true }); return; }
-    renderWorldCard(null, { find: "Find the region", pick: "Pick the code", explore: "Explore" }[m]);
-    return;
+    if (m === "search") {
+      for (const id of MODES) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
+      state = {}; searchPick = null; renderSearch().focus({ preventScroll: true }); return;
+    }
+    return enterCountry(COUNTRIES[load("aca-country")] ? load("aca-country") : "us");
   }
-  if ((m === "find" || m === "pick") && C.mini) m = "explore";
+  if ((m === "find" || m === "pick" || m === "test") && C.mini) m = "explore";
   mode = m; clearTimeout(state.timer);
-  for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
+  for (const id of MODES) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
   if (m === "explore") { state = {}; explore(codeMap[C.start].regions[0]); }
   else if (m === "search") { state = {}; searchPick = null; clearMarks(); renderSearch().focus({ preventScroll: true }); }
+  else if (m === "test") newTest();
   else newGame();
 }
-document.getElementById("m-find").onclick = () => setMode("find");
-document.getElementById("m-pick").onclick = () => setMode("pick");
-document.getElementById("m-explore").onclick = () => setMode("explore");
-document.getElementById("m-search").onclick = () => setMode("search");
-for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", "false");
+for (const id of MODES) { document.getElementById("m-" + id).onclick = () => setMode(id); document.getElementById("m-" + id).setAttribute("aria-pressed", "false"); }
 showWorld();
 </script>
 
