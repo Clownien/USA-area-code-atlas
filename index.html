@@ -97,6 +97,9 @@ h1 span { color: var(--muted); font-weight: 600; }
 .wc.play:hover, .wc.play.hot { fill: var(--accent); }
 .wc.info { fill: var(--land); cursor: pointer; }
 .wc.info:hover, .wc.info.hot { fill: var(--land-hover); }
+.wc.target { fill: var(--accent) !important; }
+.wc.good { fill: var(--good) !important; }
+.wc.bad { fill: var(--bad) !important; }
 .wc.off { fill: color-mix(in srgb, var(--rule) 55%, var(--panel)); cursor: help; }
 .wc.off:hover, .wc.off.hot { fill: color-mix(in srgb, var(--rule) 90%, var(--panel)); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
@@ -576,6 +579,7 @@ function setFrame(W, H, places, names) {
   cancelAnimationFrame(zoomAnim); vb = FULL.slice(); goal = FULL.slice(); applyVB(FULL);
 }
 function setCountry(k) {
+  if (capQ) clearTimeout(capQ.timer); capQ = null;
   tip.hidden = true; view = "country"; ck = k; C = COUNTRIES[k];
   ({ CODES, REGIONS, ABBR } = C.data); codeMap = C.codeMap; regMap = C.regMap;
   countrySel.value = k; worldBtn.setAttribute("aria-pressed", "false");
@@ -594,7 +598,7 @@ function worldStatus(c) {
   return c.n === "Antarctica" ? "ant" : "off";
 }
 function showWorld(info) {
-  tip.hidden = true; view = "world"; clearTimeout(state.timer); state = {};
+  tip.hidden = true; view = "world"; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
   worldBtn.setAttribute("aria-pressed", "true"); countrySel.value = "";
   document.getElementById("dial").textContent = "· World";
   let paths = "";
@@ -626,16 +630,155 @@ function renderWorldCard(info) {
     : info.kind === "fg" ? `French Guiana is part of France. The whole territory uses one area code, 0594, and from abroad you dial +594.`
     : `${info.name} is not in the game yet. Its calling code is ${info.dial || "not listed here"}.`);
   card.innerHTML = `${info ? `<div class="infobox"><b>${info.name} <span class="small">${info.dial}</span></b><p class="small">${why}</p></div>` : ""}
+    <div class="infobox"><b>Capitals quiz</b><p class="small">Learn the area codes of ${Object.keys(CAPITALS).length} capital cities on the world map.</p>
+      <div class="row"><button class="btn primary" data-cap="find">Find the country</button><button class="btn" data-cap="pick">Pick the code</button></div></div>
     <div><p class="label">Choose a country</p><p class="small" style="margin-top:4px">Click a country on the map or pick one below.</p></div>
     <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:var(--land)"></i>No area codes, or a short note</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>Not in the game yet</span></div>
     <div class="groups">${GROUPS.map(([g, ks]) => `<div><p class="label" style="margin-bottom:6px">${g}</p><div class="chips">${ks.map(chip).join("")}</div></div>`).join("")}
     <details class="nocodes"${info && info.kind === "none" ? " open" : ""}><summary class="label">No area codes (${NO_CODES.size + Object.keys(SMALL).length - Object.keys(SMALL_NOTES).length} countries)</summary><div class="chips quiet" style="margin-top:8px">${[...NO_CODES, ...Object.keys(SMALL).filter(n => !SMALL_NOTES[n])].sort().map(n => `<button data-none="${n}">${niceName(n)}<small>${DIAL[n] || SMALL[n]}</small></button>`).join("")}</div></details>
     <p class="small">Every other country is on the map too: point at one to see its calling code.</p></div>`;
   card.querySelectorAll("[data-k]").forEach(b => b.onclick = () => enterCountry(b.dataset.k));
+  card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap));
   card.querySelectorAll("[data-none]").forEach(b => b.onclick = () => { renderWorldCard(worldInfo(b.dataset.none)); hotWorld(b.dataset.none); });
 }
 function hotWorld(id) { svg.querySelectorAll(".wc.hot").forEach(e => e.classList.remove("hot")); svg.querySelectorAll(`[data-w="${CSS.escape(id)}"]`).forEach(e => e.classList.add("hot")); }
 function enterCountry(k) { setCountry(k); setMode(mode); }
+
+// ---------- Capitals quiz (on the world map) ----------
+// Capital city and its area code, keyed by the country's name on the world map.
+const CAPITALS = {
+  "United States of America": ["Washington, D.C.", "202"], "Canada": ["Ottawa", "613"], "Mexico": ["Mexico City", "55"], "Cuba": ["Havana", "7"],
+  "Jamaica": ["Kingston", "876"], "Bahamas": ["Nassau", "242"], "Dominican Rep.": ["Santo Domingo", "809"], "Puerto Rico": ["San Juan", "787"], "Trinidad and Tobago": ["Port of Spain", "868"],
+  "Brazil": ["Brasília", "61"], "Argentina": ["Buenos Aires", "11"], "Chile": ["Santiago", "2"], "Colombia": ["Bogotá", "601"], "Peru": ["Lima", "1"],
+  "Venezuela": ["Caracas", "212"], "Ecuador": ["Quito", "2"], "Bolivia": ["La Paz", "2"], "Paraguay": ["Asunción", "21"], "Uruguay": ["Montevideo", "2"],
+  "United Kingdom": ["London", "020"], "Germany": ["Berlin", "030"], "France": ["Paris", "01"], "Italy": ["Rome", "06"], "Spain": ["Madrid", "91"],
+  "Portugal": ["Lisbon", "21"], "Netherlands": ["Amsterdam", "020"], "Belgium": ["Brussels", "02"], "Ireland": ["Dublin", "01"], "Austria": ["Vienna", "01"],
+  "Switzerland": ["Bern", "031"], "Poland": ["Warsaw", "22"], "Slovakia": ["Bratislava", "02"], "Hungary": ["Budapest", "1"], "Romania": ["Bucharest", "021"],
+  "Bulgaria": ["Sofia", "02"], "Greece": ["Athens", "210"], "Croatia": ["Zagreb", "1"], "Serbia": ["Belgrade", "11"], "Ukraine": ["Kyiv", "44"],
+  "Belarus": ["Minsk", "17"], "Lithuania": ["Vilnius", "5"], "Moldova": ["Chișinău", "22"], "Slovenia": ["Ljubljana", "1"], "Bosnia and Herz.": ["Sarajevo", "33"],
+  "Montenegro": ["Podgorica", "20"], "Kosovo": ["Pristina", "38"], "Macedonia": ["Skopje", "2"], "Albania": ["Tirana", "4"], "Sweden": ["Stockholm", "08"],
+  "Finland": ["Helsinki", "09"], "Russia": ["Moscow", "495"], "Turkey": ["Ankara", "312"], "Georgia": ["Tbilisi", "32"], "Armenia": ["Yerevan", "10"],
+  "Azerbaijan": ["Baku", "12"], "Lebanon": ["Beirut", "1"], "Syria": ["Damascus", "11"], "Israel": ["Jerusalem", "2"], "Palestine": ["Ramallah", "02"],
+  "Jordan": ["Amman", "6"], "Iraq": ["Baghdad", "1"], "Saudi Arabia": ["Riyadh", "11"], "United Arab Emirates": ["Abu Dhabi", "2"], "Yemen": ["Sanaa", "1"],
+  "Iran": ["Tehran", "21"], "China": ["Beijing", "10"], "India": ["New Delhi", "11"], "Japan": ["Tokyo", "03"], "South Korea": ["Seoul", "02"],
+  "Indonesia": ["Jakarta", "21"], "Philippines": ["Manila", "2"], "Vietnam": ["Hanoi", "24"], "Thailand": ["Bangkok", "2"], "Malaysia": ["Kuala Lumpur", "3"],
+  "Cambodia": ["Phnom Penh", "23"], "Laos": ["Vientiane", "21"], "Myanmar": ["Naypyidaw", "67"], "Pakistan": ["Islamabad", "51"], "Afghanistan": ["Kabul", "20"],
+  "Bangladesh": ["Dhaka", "2"], "Nepal": ["Kathmandu", "1"], "Sri Lanka": ["Colombo", "11"], "Taiwan": ["Taipei", "2"], "Kazakhstan": ["Astana", "7172"],
+  "Uzbekistan": ["Tashkent", "71"], "Kyrgyzstan": ["Bishkek", "312"], "Tajikistan": ["Dushanbe", "37"], "Mongolia": ["Ulaanbaatar", "11"], "North Korea": ["Pyongyang", "2"],
+  "Bhutan": ["Thimphu", "2"], "Turkmenistan": ["Ashgabat", "12"], "Egypt": ["Cairo", "2"], "Libya": ["Tripoli", "21"], "Algeria": ["Algiers", "21"],
+  "Morocco": ["Rabat", "537"], "Nigeria": ["Abuja", "9"], "Ghana": ["Accra", "0302"], "Kenya": ["Nairobi", "20"], "Ethiopia": ["Addis Ababa", "11"],
+  "Tanzania": ["Dodoma", "26"], "Zambia": ["Lusaka", "211"], "Zimbabwe": ["Harare", "242"], "Mozambique": ["Maputo", "21"], "Namibia": ["Windhoek", "61"],
+  "South Africa": ["Pretoria", "012"], "Uganda": ["Kampala", "0414"], "Sudan": ["Khartoum", "183"], "Eritrea": ["Asmara", "1"], "Sierra Leone": ["Freetown", "22"],
+  "Australia": ["Canberra", "02"], "New Zealand": ["Wellington", "04"],
+};
+let capQ = null;
+const capDial = n => { const k = PLAY_NAMES[n]; return k ? (k === "cb" ? "+1" : COUNTRIES[k].dial) : NOTES[n] ? NOTES[n][0] : DIAL[n]; };
+// From abroad the leading 0 is dropped, except in Italy.
+const capIntl = n => { const code = CAPITALS[n][1]; return `${capDial(n)} ${code.startsWith("0") && n !== "Italy" ? code.slice(1) : code}`; };
+const capEl = n => svg.querySelector(`.wc[data-w="${CSS.escape(n)}"]`);
+const capWhere = n => `${CAPITALS[n][0]}, ${niceName(n)}`;
+function capClear() { svg.querySelectorAll(".wc.target, .wc.good, .wc.bad").forEach(e => e.classList.remove("target", "good", "bad")); }
+function capZoom(n) {
+  const el = capEl(n); if (!el) return;
+  const bb = el.getBBox();
+  if (bb.width > FULL[2] * 0.2) return animateTo(FULL);
+  const w = Math.max(FULL[2] * 0.3, bb.width * 4, bb.height * 4 * AR), h = w / AR;
+  animateTo([bb.x + bb.width / 2 - w / 2, bb.y + bb.height / 2 - h / 2, w, h]);
+}
+function startCapitals(m) {
+  const pool = Object.keys(CAPITALS).filter(n => capEl(n));
+  capQ = { m, qs: shuffle(pool).slice(0, 10), i: 0, score: 0, streak: 0, misses: [], phase: "ask", hint: false };
+  capAsk();
+}
+function capHeader() {
+  const q = capQ;
+  return `<div class="meta"><div><p class="label">Round</p><b>${Math.min(q.i + 1, q.qs.length)}/${q.qs.length}</b></div><div><p class="label">Score</p><b>${q.score}</b></div><div><p class="label">Streak</p><b>${q.streak}</b></div><div><p class="label">Best</p><b>${best["cap-" + q.m] ?? "–"}</b></div></div>
+  <div class="progress"><i style="width:${q.i / q.qs.length * 100}%"></i></div>`;
+}
+const capFoot = `<div class="row"><button class="btn" id="cap-stop">Back to the world map</button></div>`;
+function capAsk() {
+  capClear(); tip.hidden = true;
+  const q = capQ, n = q.qs[q.i], [city, code] = CAPITALS[n];
+  q.phase = "ask"; q.hint = false;
+  if (q.m === "find") {
+    card.innerHTML = `${capHeader()}<p class="label" style="text-align:center">Capitals quiz · a capital's area code</p>${keys(code)}
+      <p class="q">Which country's capital uses this area code?</p><p class="hint" id="hint">Click the country on the world map. If several capitals share the code, any of them counts.</p>
+      <div class="row"><button class="btn" id="b-hint">Show the calling code (½ points)</button><button class="btn" id="b-skip">Skip</button></div>${capFoot}`;
+    card.querySelector("#b-hint").onclick = e => { q.hint = true; card.querySelector("#hint").textContent = `From abroad it is dialled ${capIntl(n)}.`; e.target.disabled = true; };
+    card.querySelector("#b-skip").onclick = () => capFind(null);
+  } else {
+    capEl(n).classList.add("target"); capZoom(n);
+    const codes = [...new Set(Object.values(CAPITALS).map(c => c[1]))].filter(c => c !== code);
+    const opts = shuffle([code, ...shuffle(codes).slice(0, 3)]);
+    card.innerHTML = `${capHeader()}<p class="label" style="text-align:center">Capitals quiz · dialing</p>
+      <p class="q">What is the area code of ${city}, ${niceName(n)}?</p><p class="hint">The country is lit on the map.</p>
+      <div class="opts">${opts.map(o => `<button data-c="${o}">${o}</button>`).join("")}</div>${capFoot}`;
+    card.querySelectorAll(".opts button").forEach(b => b.onclick = () => capPick(b));
+  }
+  card.querySelector("#cap-stop").onclick = () => showWorld();
+}
+function capScore(right) {
+  const q = capQ, pts = right ? (q.hint ? 50 : 100) + Math.min(q.streak, 5) * 10 : 0;
+  q.score += pts; q.streak = right ? q.streak + 1 : 0;
+  return pts;
+}
+function capFind(name) {
+  const q = capQ, n = q.qs[q.i], code = CAPITALS[n][1];
+  q.phase = "shown";
+  const right = !!name && !!CAPITALS[name] && CAPITALS[name][1] === code;
+  let msg;
+  if (right) {
+    capEl(name).classList.add("good");
+    const p = capScore(true);
+    msg = `<p class="feedback good">Correct. ${capWhere(name)} uses ${code}${name !== n ? `, and so does ${capWhere(n)}` : ""}. From abroad: ${capIntl(name)}. +${p}</p>`;
+  } else {
+    if (name && capEl(name)) flashWorld(name);
+    capEl(n)?.classList.add("target"); capScore(false); q.misses.push(n);
+    msg = `<p class="feedback bad">${name ? `Not ${niceName(name)}${CAPITALS[name] ? ` (${CAPITALS[name][0]} uses ${CAPITALS[name][1]})` : ""}. ` : ""}${code} is the area code of ${capWhere(n)}, in yellow. From abroad: ${capIntl(n)}.</p>`;
+  }
+  capResult(msg, right);
+}
+function capPick(btn) {
+  const q = capQ, n = q.qs[q.i], code = CAPITALS[n][1];
+  q.phase = "shown";
+  const right = btn.dataset.c === code;
+  card.querySelectorAll(".opts button").forEach(b => { b.disabled = true; if (b.dataset.c === code) b.classList.add("good"); });
+  let msg;
+  if (right) { capClear(); capEl(n).classList.add("good"); const p = capScore(true); msg = `<p class="feedback good">Correct. ${capWhere(n)} uses ${code}. From abroad: ${capIntl(n)}. +${p}</p>`; }
+  else {
+    btn.classList.add("bad"); capScore(false); q.misses.push(n);
+    const others = Object.keys(CAPITALS).filter(x => CAPITALS[x][1] === btn.dataset.c).map(capWhere);
+    msg = `<p class="feedback bad">${btn.dataset.c} is the area code of ${others.slice(0, 2).join(" and ")}${others.length > 2 ? " and others" : ""}. ${CAPITALS[n][0]} uses ${code}.</p>`;
+  }
+  capResult(msg, right);
+}
+function flashWorld(n) {
+  const el = capEl(n); el.classList.add("bad");
+  setTimeout(() => el.classList.remove("bad"), 1600);
+}
+function capResult(msg, right) {
+  card.querySelector(".meta").outerHTML = capHeader().split('<div class="progress">')[0];
+  card.querySelector(".hint").outerHTML = msg;
+  const nextHtml = `<div class="row"><button class="btn primary" id="b-next">${capQ.i + 1 >= capQ.qs.length ? "See results" : "Next capital"}</button></div>`;
+  if (capQ.m === "find") card.querySelector(".row").outerHTML = nextHtml; else card.querySelector(".opts").insertAdjacentHTML("afterend", nextHtml);
+  const next = card.querySelector("#b-next"); next.focus({ preventScroll: true }); next.onclick = capAdvance;
+  if (right) capQ.timer = setTimeout(capAdvance, 1600);
+}
+function capAdvance() {
+  const q = capQ; if (!q || q.phase !== "shown") return;
+  clearTimeout(q.timer); q.i++;
+  if (q.i < q.qs.length) { if (q.m === "pick") animateTo(FULL); return capAsk(); }
+  q.phase = "over"; capClear(); animateTo(FULL);
+  const k = "cap-" + q.m, isBest = !(best[k] >= q.score);
+  if (isBest) { best[k] = q.score; save("aca-best3", best); }
+  card.innerHTML = `<p class="label" style="text-align:center">Capitals quiz · finished</p><p class="big">${q.score}</p>
+    <p class="q">${q.qs.length - q.misses.length} of ${q.qs.length} right${isBest ? " · new best" : ""}</p>
+    ${q.misses.length ? `<div><p class="label" style="margin-bottom:6px">Capitals to review</p><ul class="misses">${q.misses.map(n => `<li><code>${CAPITALS[n][1]}</code><span>${capWhere(n)} · ${capIntl(n)}</span></li>`).join("")}</ul></div>` : `<p class="small" style="text-align:center">A clean sweep.</p>`}
+    <div class="row"><button class="btn primary" id="cap-again">Play again</button>${capFoot.replace('<div class="row">', "").replace("</div>", "")}</div>`;
+  card.querySelector("#cap-again").onclick = () => startCapitals(q.m);
+  card.querySelector("#cap-stop").onclick = () => showWorld();
+}
+
 worldBtn.onclick = () => showWorld();
 countrySel.onchange = () => { if (countrySel.value) enterCountry(countrySel.value); };
 
@@ -749,6 +892,7 @@ svg.addEventListener("click", e => {
   if (view === "world") {
     const w = e.target.closest("[data-w]");
     if (!w) return;
+    if (capQ) { if (capQ.m === "find" && capQ.phase === "ask" && w.classList.contains("wc")) capFind(w.dataset.w); return; }
     const info = worldInfo(w.dataset.w);
     if (!info.k) { renderWorldCard(info); hotWorld(w.dataset.w); } else enterCountry(info.k);
     return;
@@ -767,8 +911,9 @@ svg.addEventListener("mousemove", e => {
   if (view === "world") {
     const w = e.target.closest("[data-w]");
     if (!w) { tip.hidden = true; return; }
-    const info = worldInfo(w.dataset.w), box = mapbox.getBoundingClientRect();
-    tip.textContent = `${info.name}${info.dial ? " · " + info.dial : ""} · ${info.k ? "click to play" : info.kind === "none" ? "no area codes" : info.kind === "fg" ? "area code 0594" : info.kind === "note" ? "click to read" : "not in the game yet"}`;
+    const info = worldInfo(w.dataset.w), box = mapbox.getBoundingClientRect(), n = w.dataset.w;
+    if (capQ) tip.textContent = capQ.phase === "ask" || !CAPITALS[n] ? info.name : `${info.name} · ${CAPITALS[n][0]} · ${CAPITALS[n][1]}`;
+    else tip.textContent = `${info.name}${info.dial ? " · " + info.dial : ""} · ${info.k ? "click to play" : info.kind === "none" ? "no area codes" : info.kind === "fg" ? "area code 0594" : info.kind === "note" ? "click to read" : "not in the game yet"}`;
     tip.hidden = false;
     tip.style.left = Math.min(box.width - 80, Math.max(80, e.clientX - box.left)) + "px"; tip.style.top = (e.clientY - box.top) + "px";
     return;
