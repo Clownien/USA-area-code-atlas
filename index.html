@@ -369,6 +369,41 @@ body.track-calling .wmk circle { fill: var(--w-call); }
 #m-search:hover:not([aria-pressed="true"]) { background: color-mix(in srgb, var(--ink) 8%, var(--panel)) !important; }
 @media (max-width: 860px) { #m-search { margin-left: 0; } }
 .wc.outscope, .wmk.outscope { opacity: .12; pointer-events: none; }
+/* Practice offer */
+.practice { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 12px; padding: 10px 12px; }
+.practice span { font-size: 14px; }
+.practice .btn { flex: none; padding: 8px 12px; }
+/* Trophy page */
+body.on-trophies .board, body.on-trophies .start { display: none !important; }
+body:not(.on-trophies) .tpage { display: none; }
+.tpage { display: grid; gap: 18px; }
+.tp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.tp-head h2 { font: 800 clamp(26px, 3.4vw, 36px)/1.1 var(--font-display); margin: 0; }
+.tp-head .btn { flex: none; }
+.tp-row .btn { flex: none; padding: 7px 12px; }
+.tp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .tp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tp-stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); display: grid; gap: 4px; }
+.tp-stat b { font: 800 30px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tp-stat small { color: var(--muted); font-size: 13px; }
+.tp-card { background: var(--panel); border: 1px solid var(--rule); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); display: grid; gap: 12px; min-width: 0; }
+.tp-card h3 { font: 700 18px var(--font-display); margin: 0; }
+.tp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .tp-grid { grid-template-columns: minmax(0, 1fr); } }
+.tp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.tp-row .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+.tp-row .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--good), color-mix(in srgb, var(--good) 55%, var(--accent))); border-radius: 4px; }
+.tp-row .bar.gold i { background: var(--w-gold); }
+.tp-row small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tp-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.tp-empty { color: var(--muted); font-size: 14px; margin: 0; }
+.tp-scores { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tp-scores td { padding: 7px 4px; border-top: 1px solid var(--rule); }
+.tp-scores td:last-child { text-align: right; font: 600 15px var(--font-mono); }
+.tp-world { height: 14px; border-radius: 7px; background: var(--bg); overflow: hidden; }
+.tp-world i { display: block; height: 100%; background: linear-gradient(90deg, var(--good), var(--w-gold)); }
+#start-trophies { justify-self: center; }
+@media (max-width: 860px) { #b-trophies { flex: 1 1 auto; justify-content: center; } }
 /* Complete tab */
 .trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
 .trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
@@ -390,6 +425,7 @@ body.track-calling .wmk circle { fill: var(--w-call); }
     </div>
     <div class="controls">
       <div class="pickrow">
+        <button class="trackbtn" id="b-trophies" title="Your trophies and progress">🏆 <span>Trophies</span></button>
         <button class="trackbtn" id="b-track" title="Switch between area codes and calling codes"><span id="track-name">Area codes</span><span aria-hidden="true">⇄</span></button>
         <button class="worldbtn" id="b-world" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>World map</button>
         <div class="cpick">
@@ -426,7 +462,9 @@ body.track-calling .wmk circle { fill: var(--w-call); }
         <span class="cf">Every country in the world · Find the country · Pick the code</span>
       </button>
     </div>
+    <button class="trackbtn" id="start-trophies">🏆 My trophies and progress</button>
   </section>
+  <section class="tpage" id="tpage" aria-labelledby="tp-h"></section>
   <div class="board" id="board">
     <div class="mapbox" id="mapbox">
       <div class="zoom" role="group" aria-label="Map zoom"><button class="pm" id="z-out" aria-label="Zoom out">−</button><button class="pm" id="z-in" aria-label="Zoom in">+</button>
@@ -786,6 +824,7 @@ function setFrame(W, H, places, names, view) {
   cancelAnimationFrame(zoomAnim); vb = FULL.slice(); goal = FULL.slice(); applyVB(FULL);
 }
 function setCountry(k) {
+  document.body.classList.remove("on-trophies");
   if (capQ) clearTimeout(capQ.timer); capQ = null;
   tip.hidden = true; view = "country"; ck = k; C = COUNTRIES[k];
   ({ CODES, REGIONS, ABBR } = C.data); codeMap = C.codeMap; regMap = C.regMap;
@@ -805,7 +844,7 @@ function worldStatus(c) {
   return c.n === "Antarctica" ? "ant" : "off";
 }
 function showWorld(info) {
-  tip.hidden = true; view = "world"; worldCont = null; dialScope = null; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
+  document.body.classList.remove("on-trophies"); tip.hidden = true; view = "world"; worldCont = null; dialScope = null; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
   worldBtn.setAttribute("aria-pressed", "true"); countryName.textContent = "Choose a country";
   document.getElementById("dial").textContent = track === "calling" ? "· Calling codes" : "· World";
   let paths = "";
@@ -837,9 +876,10 @@ function renderCallingCard(info, n) {
     <div class="chips conts"><button data-cont="" aria-pressed="${!worldCont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
     <label class="circ"><input type="checkbox" id="dial-hover"${showDialHover ? " checked" : ""}><span class="dot" aria-hidden="true"></span>Show calling codes when pointing at countries</label>
     <div class="infobox"><b>Calling codes quiz · ${worldCont ? CONTINENTS.find(c => c[0] === worldCont)[1] : "Whole world"}</b><p class="small">${QUIZ.dial.pool().filter(n => capEl(n)).length} countries and territories${worldCont ? "" : ", small ones too"}. Small countries are the dots on the map.</p>
-      <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>`;
+      <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>${practiceOffer("dial")}`;
   card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap, b.dataset.set));
   card.querySelectorAll("[data-cont]").forEach(b => b.onclick = () => showContinent(b.dataset.cont || null));
+  bindPracticeOffer("dial");
   card.querySelector("#dial-hover").onchange = e => { showDialHover = e.target.checked; save("aca-showdial", showDialHover); };
 }
 // Parts of the world: the map zooms in and the panel lists that continent's playable countries.
@@ -885,11 +925,12 @@ function renderWorldCard(info, worldName) {
       <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></details>`; })() : ""}
     <div class="legend"><span><i style="background:var(--w-play)"></i>Full area-code map</span><span><i style="background:var(--w-one)"></i>One code for the whole country</span><span><i style="background:var(--w-none)"></i>No area codes</span>${completed.size ? `<span><i style="background:var(--w-gold)"></i>Completed 🏆</span>` : ""}</div>
     <details class="quizzes"><summary class="label">Capitals quiz on the world map</summary>
-      <div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
+      ${practiceOffer("cap")}<div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
 </div></details>`;
   card.querySelectorAll("[data-k]").forEach(b => b.onclick = () => enterCountry(b.dataset.k));
   card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap, b.dataset.set));
   card.querySelectorAll("[data-cont]").forEach(b => b.onclick = () => showContinent(b.dataset.cont || null));
+  bindPracticeOffer("cap");
 }
 function hotWorld(id) { svg.querySelectorAll(".wc.hot").forEach(e => e.classList.remove("hot")); svg.querySelectorAll(`[data-w="${CSS.escape(id)}"]`).forEach(e => e.classList.add("hot")); }
 function enterCountry(k) { setCountry(k); setMode(mode); }
@@ -953,6 +994,11 @@ const CAPITALS = {
 // The Caribbean counts as part of "North America & Caribbean", and Oceania as part of "Asia & Oceania".
 const inScope = (ct, scope) => !scope || ct === scope || (scope === "north" && ct === "caribbean") || (scope === "asia" && ct === "oceania");
 const ctOf = n => n === "carib" ? "caribbean" : n === "fguiana" ? "south" : (WORLD.countries.find(c => c.n === n) || WORLD.small.find(m => m.n === n) || {}).ct;
+// ---------- Mistakes: every missed code is remembered until it is answered right ----------
+const missKey = k => "aca-miss-" + k;
+const getMiss = k => new Set(load(missKey(k)) || []);
+function addMiss(k, code) { const m = getMiss(k); if (!m.has(code)) { m.add(code); save(missKey(k), [...m]); } }
+function delMiss(k, code) { const m = getMiss(k); if (m.delete(code)) save(missKey(k), [...m]); }
 let capQ = null, dialScope = null, showDialHover = !!load("aca-showdial");
 const capDial = n => { const k = PLAY_NAMES[n]; return k ? (k === "cb" ? "+1" : COUNTRIES[k].dial) : SMALL[n] ? SMALL[n] : NOTES[n] ? NOTES[n][0] : DIAL[n]; };
 // From abroad the leading 0 is dropped, except in Italy.
@@ -987,9 +1033,10 @@ function lockScope(scope) {
   svg.querySelectorAll(".wc[data-w], .wmk[data-w]").forEach(el => el.classList.toggle("outscope", !inScope(ctOf(el.dataset.w), scope)));
   svg.querySelectorAll(".wmk:not(.small)").forEach(el => el.classList.add("outscope"));
 }
-function startCapitals(m, set = "cap") {
-  const Q = QUIZ[set], pool = Q.pool().filter(n => capEl(n));
-  if (set === "dial" && dialScope) {
+function startCapitals(m, set = "cap", practice = false) {
+  const Q = QUIZ[set], pool = practice ? [...getMiss(set)].filter(n => capEl(n) && Q.ans(n)) : Q.pool().filter(n => capEl(n));
+  if (practice) { dialScope = null; capQ = { set, Q, m, practice: true, qs: shuffle(pool), i: 0, score: 0, streak: 0, misses: [], phase: "ask", hint: false }; return capAsk(); }
+  if (set === "dial" && dialScope && !practice) {
     lockScope(dialScope);
     const inView = n => { const b = capEl(n).getBBox(); return b.x + b.width > FULL[0] && b.x < FULL[0] + FULL[2] && b.y + b.height > FULL[1] && b.y < FULL[1] + FULL[3]; };
     capQ = null; const kept = pool.filter(inView); pool.length = 0; pool.push(...kept);
@@ -1036,6 +1083,7 @@ function capFind(name) {
   const known = name && Q.pool().includes(name);
   const right = !!known && Q.ans(name) === code;
   let msg;
+  if (right) delMiss(q.set, n); else { addMiss(q.set, n); if (q.practice) q.qs.push(n); }
   if (right) {
     capEl(name).classList.add("good");
     const p = capScore(true);
@@ -1053,6 +1101,7 @@ function capPick(btn) {
   const right = btn.dataset.c === code;
   card.querySelectorAll(".opts button").forEach(b => { b.disabled = true; if (b.dataset.c === code) b.classList.add("good"); });
   let msg;
+  if (right) delMiss(q.set, n); else { addMiss(q.set, n); if (q.practice) q.qs.push(n); }
   if (right) { capClear(); capEl(n).classList.add("good"); const p = capScore(true); msg = `<p class="feedback good">Correct. ${Q.name(n)} uses ${code}.${Q.extra(n)} +${p}</p>`; }
   else {
     btn.classList.add("bad"); capScore(false); q.misses.push(n);
@@ -1084,11 +1133,23 @@ function capAdvance() {
   card.innerHTML = `<p class="label" style="text-align:center">${q.Q.title} · finished</p><p class="big">${q.score}</p>
     <p class="q">${q.qs.length - q.misses.length} of ${q.qs.length} right${isBest ? " · new best" : ""}</p>
     ${q.misses.length ? `<div><p class="label" style="margin-bottom:6px">To review</p><ul class="misses">${q.misses.map(n => `<li><code>${q.Q.ans(n)}</code><span>${q.Q.name(n)}${q.set === "cap" ? " · " + capIntl(n) : ""}</span></li>`).join("")}</ul></div>` : `<p class="small" style="text-align:center">A clean sweep.</p>`}
+    ${q.practice ? `<p class="small" style="text-align:center">${getMiss(q.set).size ? `${getMiss(q.set).size} still to practice.` : "🎉 All your mistakes are fixed."}</p>` : ""}
+    ${practiceOffer(q.set)}
     <div class="row"><button class="btn primary" id="cap-again">Play again</button><button class="btn" id="cap-stop">Back to the world map</button></div>`;
+  bindPracticeOffer(q.set, q.m);
   card.querySelector("#cap-again").onclick = () => startCapitals(q.m, q.set);
   card.querySelector("#cap-stop").onclick = () => showWorld();
 }
 
+// The practice offer: shown only when there are saved mistakes, and only played if the player chooses it.
+function practiceOffer(k) {
+  const n = k === "cap" || k === "dial" ? getMiss(k).size : [...getMiss(k)].filter(c => COUNTRIES[k] && COUNTRIES[k].codeMap[c]).length;
+  return n ? `<div class="practice"><span><b>🔁 ${n}</b> ${n === 1 ? "code" : "codes"} you missed before</span><button class="btn" data-practice="${k}">Practice my mistakes</button></div>` : "";
+}
+function bindPracticeOffer(k, m) {
+  const b = card.querySelector(`[data-practice="${k}"]`); if (!b) return;
+  b.onclick = () => (k === "cap" || k === "dial") ? startCapitals(m === "pick" ? "pick" : "find", k, true) : newPractice();
+}
 // Pressing World map again while it is already open scrolls down to the map.
 worldBtn.onclick = () => {
   if (view === "world" && !capQ) {
@@ -1412,11 +1473,12 @@ function header() {
   <div class="progress"><i style="width:${state.i / ROUNDS * 100}%"></i></div>`;
 }
 function poolSeg() {
-  return `<div><p class="label" style="margin-bottom:6px">Codes to play · ${C.name}</p><div class="seg" role="group" aria-label="Code set">
+  return `${practiceOffer(ck)}<div><p class="label" style="margin-bottom:6px">Codes to play · ${C.name}</p><div class="seg" role="group" aria-label="Code set">
     <button id="p-major" aria-pressed="${pool === "major"}">Big cities (${majors().length})</button>
     <button id="p-all" aria-pressed="${pool === "all"}">All codes (${CODES.length})</button></div></div>${areaUI()}`;
 }
 function bindPool() {
+  bindPracticeOffer(ck);
   card.querySelector("#p-major").onclick = () => { pool = "major"; save("aca-pool", pool); newGame(); };
   card.querySelector("#p-all").onclick = () => { pool = "all"; save("aca-pool", pool); newGame(); };
   bindArea();
@@ -1451,6 +1513,7 @@ function ask() {
 }
 
 function onRegion(id) {
+  if (state.practice) { if (state.phase === "ask") practiceAnswer(id); return; }
   if (mode === "explore") return explore(id);
   if (mode === "search") return showDetail(id);
   if (mode === "find" && state.phase === "ask") answerFind(id);
@@ -1468,6 +1531,7 @@ function answerFind(id) {
   const r = id ? regMap[id] : null;
   const right = r && r.codes.includes(c.code);
   let msg;
+  if (right) delMiss(ck, c.code); else addMiss(ck, c.code);
   if (right) { mark(id, "good"); const p = scoreRight(true); msg = `<p class="feedback good">Correct. ${c.code} rings in ${fullPlace(c)}. +${p}</p>`; }
   else if (r && c.states.includes(r.s) && Object.keys(C.data.STATES).length > 1) {
     flashBad(id); mark(c.regions, "target"); state.misses.push(c);
@@ -1485,6 +1549,7 @@ function answerPick(btn) {
   const right = btn.dataset.c === c.code;
   card.querySelectorAll(".opts button").forEach(b => { b.disabled = true; if (b.dataset.c === c.code) b.classList.add("good"); });
   let msg;
+  if (right) delMiss(ck, c.code); else addMiss(ck, c.code);
   if (right) { clearMarks(true); mark(c.regions, "good"); const p = scoreRight(true); msg = `<p class="feedback good">Correct. ${where(c)} answers on ${c.code}. +${p}</p>`; }
   else {
     btn.classList.add("bad"); state.streak = 0; state.misses.push(c);
@@ -1718,6 +1783,7 @@ function testAnswer(id) {
   t.phase = "shown";
   const right = r && r.codes.includes(c.code);
   let msg;
+  if (right) delMiss(ck, c.code); else addMiss(ck, c.code);
   if (right) {
     t.done.add(c.code); t.queue.shift(); t.streak++;
     save(doneKey(), [...t.done]);
@@ -1751,6 +1817,57 @@ function testFinish() {
   bindTestFoot();
 }
 
+// ---------- Practice my mistakes (area codes) ----------
+// A round of only the codes missed before. Wrong answers come back until each one is right.
+function newPractice() {
+  const codes = [...getMiss(ck)].map(c => codeMap[c]).filter(Boolean);
+  if (!codes.length) return newGame();
+  clearMarks(); svg.querySelectorAll(".dim").forEach(e => e.classList.remove("dim"));
+  state = { practice: true, queue: shuffle(codes), total: codes.length, fixed: 0, mistakes: 0, streak: 0, phase: "ask" };
+  practiceAsk();
+}
+function practiceHeader() {
+  const t = state;
+  return `<div class="meta"><div><p class="label">Fixed</p><b>${t.fixed}/${t.total}</b></div><div><p class="label">Left</p><b>${t.queue.length}</b></div><div><p class="label">Streak</p><b>${t.streak}</b></div><div><p class="label">Mistakes</p><b>${t.mistakes}</b></div></div>
+  <div class="progress"><i style="width:${t.fixed / t.total * 100}%"></i></div>`;
+}
+function practiceAsk() {
+  clearMarks(true);
+  if (!state.queue.length) return practiceFinish();
+  state.phase = "ask";
+  const c = state.queue[0];
+  card.innerHTML = `${practiceHeader()}<p class="label" style="text-align:center">🔁 Practice my mistakes · ${fl(flagKey(ck))}${C.name}</p>${keys(c.code)}
+    <p class="q">Where does this area code ring?</p><p class="hint">You missed this one before. Codes you miss again come back until they are right.</p>
+    <div class="row"><button class="btn" id="pr-stop">Stop practicing</button></div>`;
+  card.querySelector("#pr-stop").onclick = () => setMode(mode);
+}
+function practiceAnswer(id) {
+  const t = state, c = t.queue[0], r = regMap[id];
+  t.phase = "shown";
+  const right = r && r.codes.includes(c.code);
+  let msg;
+  if (right) { delMiss(ck, c.code); t.queue.shift(); t.fixed++; t.streak++; mark(c.regions, "good"); msg = `<p class="feedback good">Fixed. ${c.code} is ${fullPlace(c)}.</p>`; }
+  else {
+    t.mistakes++; t.streak = 0; if (id) flashBad(id); mark(c.regions, "target");
+    t.queue.shift(); t.queue.splice(Math.min(2, t.queue.length), 0, c);
+    msg = `<p class="feedback bad">${r ? `Not ${r.n} (${r.codes.join(", ")}). ` : ""}${c.code} is ${fullPlace(c)}, in yellow. It will come back.</p>`;
+  }
+  card.querySelector(".meta").outerHTML = practiceHeader().split('<div class="progress">')[0];
+  card.querySelector(".progress").outerHTML = '<div class="progress">' + practiceHeader().split('<div class="progress">')[1];
+  card.querySelector(".hint").outerHTML = msg;
+  card.querySelector(".row").outerHTML = `<div class="row"><button class="btn primary" id="pr-next">${t.queue.length ? "Next code" : "Finish"}</button></div>`;
+  const next = card.querySelector("#pr-next"); next.focus({ preventScroll: true });
+  const go = () => { clearTimeout(t.timer); if (t.phase === "shown") practiceAsk(); };
+  next.onclick = go; if (right) t.timer = setTimeout(go, 1100);
+}
+function practiceFinish() {
+  state.phase = "over";
+  card.innerHTML = `<div class="trophy"><span aria-hidden="true">🎉</span><p class="label">Practice done</p><p class="big">${state.total} fixed</p>
+    <p class="q">All your mistakes in ${C.name} are fixed${state.mistakes ? `, with ${state.mistakes} slip${state.mistakes > 1 ? "s" : ""} on the way` : ""}.</p></div>
+    <div class="row"><button class="btn primary" id="pr-back">Back to the game</button></div>`;
+  card.querySelector("#pr-back").onclick = () => setMode(mode);
+}
+
 // ---------- Modes and countries ----------
 function setMode(m) {
   setTimeout(applyAreaDim);
@@ -1775,7 +1892,7 @@ for (const id of MODES) { document.getElementById("m-" + id).onclick = () => set
 let track = "area";
 const startEl = document.getElementById("start");
 function showStart() {
-  document.body.classList.add("on-start"); tip.hidden = true;
+  document.body.classList.remove("on-trophies"); document.body.classList.add("on-start"); tip.hidden = true;
   document.getElementById("sub").textContent = "Learn the phone codes of the world: area codes inside each country, and calling codes for every country.";
   document.getElementById("dial").textContent = "";
   startEl.querySelector(".choice." + (track === "calling" ? "calling" : "area")).focus({ preventScroll: true });
@@ -1790,6 +1907,65 @@ function chooseTrack(t) {
     : "Learn where area codes ring. Pick a country on the world map. Each country is split into area-code regions, shown with dashed lines.";
   showWorld();
 }
+// ---------- Trophy page ----------
+const tpage = document.getElementById("tpage");
+const playableKeys = () => GROUPS.flatMap(g => g[1]);
+const MODE_NAME = { find: "Find the region", pick: "Pick the code" };
+function scoreLabel(k) {
+  const [a, b, c] = k.split("-");
+  if (a === "cap") return `🏛️ Capitals quiz · ${b === "find" ? "Find the country" : "Pick the code"}`;
+  if (a === "dial") return `🌍 Calling codes quiz · ${b === "find" ? "Find the country" : "Pick the code"}`;
+  if (!COUNTRIES[a]) return null;
+  return `${flagKey(a)} ${COUNTRIES[a].name} · ${MODE_NAME[b] || b}${c ? " · " + (c === "major" ? "Big cities" : "All codes") : ""}`;
+}
+function showTrophies() {
+  document.body.classList.add("on-trophies"); tip.hidden = true;
+  const keys = playableKeys();
+  const prog = keys.map(k => { const K = COUNTRIES[k], n = K.data.CODES.length, d = (load("aca-done-" + k) || []).filter(c => K.codeMap[c]).length; return { k, n, d: completed.has(k) ? n : d, done: completed.has(k) }; });
+  const totalCodes = prog.reduce((a, p) => a + p.n, 0), placed = prog.reduce((a, p) => a + p.d, 0);
+  const doneCount = prog.filter(p => p.done).length, pct = totalCodes ? Math.round(placed / totalCodes * 1000) / 10 : 0;
+  const conts = CONTINENTS.map(([key, label, groups]) => { const ks = groups.flatMap(g => GROUPS.find(x => x[0] === g)[1]); const dn = ks.filter(k => completed.has(k)).length; return { label, n: ks.length, dn }; });
+  const contDone = conts.filter(c => c.dn === c.n).length;
+  const started = prog.filter(p => !p.done && p.d > 0).sort((a, b) => b.d / b.n - a.d / a.n);
+  const finished = prog.filter(p => p.done).sort((a, b) => COUNTRIES[a.k].name.localeCompare(COUNTRIES[b.k].name));
+  const scores = Object.entries(best).filter(([k, v]) => v > 0 && scoreLabel(k)).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const misses = [...keys.map(k => ({ k, n: [...getMiss(k)].filter(c => COUNTRIES[k].codeMap[c]).length, label: `${flagKey(k)} ${COUNTRIES[k].name}` })),
+    { k: "cap", n: getMiss("cap").size, label: "🏛️ Capitals quiz" }, { k: "dial", n: getMiss("dial").size, label: "🌍 Calling codes quiz" }].filter(m => m.n);
+  const row = (name, d, n, gold, extra = "") => `<li class="tp-row"><span>${name}</span><small>${d}/${n}${extra}</small><span class="bar${gold ? " gold" : ""}"><i style="width:${n ? d / n * 100 : 0}%"></i></span></li>`;
+  tpage.innerHTML = `<div class="tp-head"><h2 id="tp-h">🏆 Your trophies</h2><button class="btn primary" id="tp-back">Back to the game</button></div>
+    <div class="tp-stats">
+      <div class="tp-stat"><small>Countries completed</small><b>${doneCount}<span class="small"> / ${keys.length}</span></b></div>
+      <div class="tp-stat"><small>Continents completed</small><b>${contDone}<span class="small"> / ${conts.length}</span></b></div>
+      <div class="tp-stat"><small>Area codes placed</small><b>${placed.toLocaleString("en")}</b><small>of ${totalCodes.toLocaleString("en")}</small></div>
+      <div class="tp-stat"><small>World finished</small><b>${pct}%</b></div>
+    </div>
+    <div class="tp-card"><h3>How much of the world you have finished</h3><div class="tp-world" role="img" aria-label="${pct}% finished"><i style="width:${pct}%"></i></div>
+      <p class="small">Every area code placed in the Complete tab counts. Finish a country to get its trophy, and every country on a continent to complete the continent.</p></div>
+    <div class="tp-grid">
+      <div class="tp-card"><h3>Continents</h3><ul class="tp-list">${conts.map(c => row(`${c.dn === c.n ? "🏆 " : ""}${c.label}`, c.dn, c.n, c.dn === c.n, " countries")).join("")}</ul></div>
+      <div class="tp-card"><h3>Completed countries</h3>${finished.length ? `<div class="chips">${finished.map(p => `<button data-go="${p.k}">${fl(flagKey(p.k))}${COUNTRIES[p.k].name} 🏆</button>`).join("")}</div>` : `<p class="tp-empty">No trophies yet. Open a country and play the <b>Complete</b> tab: place every area code correctly to win its trophy.</p>`}</div>
+      <div class="tp-card"><h3>Started, not finished</h3>${started.length ? `<ul class="tp-list">${started.slice(0, 12).map(p => `<li class="tp-row"><span>${fl(flagKey(p.k))}${COUNTRIES[p.k].name}</span><button class="btn" data-continue="${p.k}">Continue</button><span class="bar"><i style="width:${p.d / p.n * 100}%"></i></span><small>${p.d}/${p.n} codes</small></li>`).join("")}</ul>` : `<p class="tp-empty">Countries you start in the Complete tab show up here.</p>`}</div>
+      <div class="tp-card"><h3>Mistakes to practice</h3>${misses.length ? `<ul class="tp-list">${misses.map(m => `<li class="tp-row"><span>${m.label} <small>· ${m.n} ${m.n === 1 ? "code" : "codes"}</small></span><button class="btn" data-practice-go="${m.k}">Practice</button></li>`).join("")}</ul>` : `<p class="tp-empty">No saved mistakes. Every code you miss in a game is saved here so you can practice it later.</p>`}</div>
+      <div class="tp-card"><h3>Best scores</h3>${scores.length ? `<table class="tp-scores"><tbody>${scores.map(([k, v]) => `<tr><td>${scoreLabel(k)}</td><td>${v}</td></tr>`).join("")}</tbody></table>` : `<p class="tp-empty">Play a round of Find the region, Pick the code or a quiz to set your first best score.</p>`}</div>
+    </div>`;
+  const back = () => { document.body.classList.remove("on-trophies"); };
+  tpage.querySelector("#tp-back").onclick = () => { back(); if (document.body.classList.contains("on-start")) return; };
+  tpage.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { back(); leaveStart("area"); enterCountry(b.dataset.go); });
+  tpage.querySelectorAll("[data-continue]").forEach(b => b.onclick = () => { back(); leaveStart("area"); setCountry(b.dataset.continue); setMode("test"); });
+  tpage.querySelectorAll("[data-practice-go]").forEach(b => b.onclick = () => {
+    back(); const k = b.dataset.practiceGo;
+    if (k === "cap" || k === "dial") { leaveStart(k === "dial" ? "calling" : "area"); startCapitals("find", k, true); }
+    else { leaveStart("area"); setCountry(k); mode = "find"; for (const id of MODES) document.getElementById("m-" + id).setAttribute("aria-pressed", id === "find"); newPractice(); }
+  });
+  window.scrollTo({ top: 0 });
+}
+// Leaving the start screen from the trophy page: keep the current game type, or switch to the one needed.
+function leaveStart(t) {
+  if (t && t !== track) { chooseTrack(t); return; }
+  if (document.body.classList.contains("on-start")) chooseTrack(track);
+}
+document.getElementById("b-trophies").onclick = showTrophies;
+document.getElementById("start-trophies").onclick = showTrophies;
 startEl.querySelectorAll("[data-track]").forEach(b => b.onclick = () => chooseTrack(b.dataset.track));
 document.getElementById("b-track").onclick = () => { if (capQ) clearTimeout(capQ.timer); capQ = null; showStart(); };
 showWorld();

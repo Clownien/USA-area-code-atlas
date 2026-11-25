@@ -7,6 +7,8 @@ A map game for learning telephone area codes region by region around the world, 
 - **Find the region:** an area code appears; click the part of the map where it rings.
 - **Pick the code:** a region lights up; choose its area code.
 - **Complete:** place every area code in a country correctly to complete it. Completed countries get a trophy and turn gold on the world map.
+- **Practice my mistakes:** every missed code is saved, and you can choose to practice just those until they are right.
+- **Trophies:** an overview of completed countries and continents, progress, best scores and mistakes to practice.
 - **Explore:** click any region to study its codes.
 - **Capitals quiz:** on the world map, find the country whose capital uses an area code, or pick the code for a capital.
 - **Calling codes quiz:** every country in the world, small ones included, by its international calling code.
