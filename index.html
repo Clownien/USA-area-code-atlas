@@ -845,7 +845,7 @@ function renderCallingCard(info, n) {
 // Parts of the world: the map zooms in and the panel lists that continent's playable countries.
 const CONTINENTS = [
   ["north", "North America & Caribbean", ["North America", "Caribbean"]], ["south", "South America", ["South America"]],
-  ["europe", "Europe", ["Europe"]], ["asia", "Asia & Middle East", ["Caucasus & Middle East", "Asia"]], ["africa", "Africa", ["Africa"]], ["oceania", "Oceania", ["Oceania"]],
+  ["europe", "Europe", ["Europe"]], ["asia", "Asia & Oceania", ["Caucasus & Middle East", "Asia", "Oceania"]], ["africa", "Africa", ["Africa"]],
 ];
 let worldCont = null;
 function contBox(key) {
@@ -950,8 +950,8 @@ const CAPITALS = {
   "South Africa": ["Pretoria", "012"], "Uganda": ["Kampala", "0414"], "Sudan": ["Khartoum", "183"], "Eritrea": ["Asmara", "1"], "Sierra Leone": ["Freetown", "22"],
   "Australia": ["Canberra", "02"], "New Zealand": ["Wellington", "04"],
 };
-// The Caribbean counts as part of "North America & Caribbean".
-const inScope = (ct, scope) => !scope || ct === scope || (scope === "north" && ct === "caribbean");
+// The Caribbean counts as part of "North America & Caribbean", and Oceania as part of "Asia & Oceania".
+const inScope = (ct, scope) => !scope || ct === scope || (scope === "north" && ct === "caribbean") || (scope === "asia" && ct === "oceania");
 const ctOf = n => n === "carib" ? "caribbean" : n === "fguiana" ? "south" : (WORLD.countries.find(c => c.n === n) || WORLD.small.find(m => m.n === n) || {}).ct;
 let capQ = null, dialScope = null, showDialHover = !!load("aca-showdial");
 const capDial = n => { const k = PLAY_NAMES[n]; return k ? (k === "cb" ? "+1" : COUNTRIES[k].dial) : SMALL[n] ? SMALL[n] : NOTES[n] ? NOTES[n][0] : DIAL[n]; };
@@ -989,7 +989,11 @@ function lockScope(scope) {
 }
 function startCapitals(m, set = "cap") {
   const Q = QUIZ[set], pool = Q.pool().filter(n => capEl(n));
-  if (set === "dial" && dialScope) lockScope(dialScope);
+  if (set === "dial" && dialScope) {
+    lockScope(dialScope);
+    const inView = n => { const b = capEl(n).getBBox(); return b.x + b.width > FULL[0] && b.x < FULL[0] + FULL[2] && b.y + b.height > FULL[1] && b.y < FULL[1] + FULL[3]; };
+    capQ = null; const kept = pool.filter(inView); pool.length = 0; pool.push(...kept);
+  }
   capQ = { set, Q, m, qs: shuffle(pool).slice(0, 10), i: 0, score: 0, streak: 0, misses: [], phase: "ask", hint: false };
   capAsk();
 }
