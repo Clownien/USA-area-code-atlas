@@ -355,6 +355,14 @@ body.track-calling .wmk circle { fill: var(--w-call); }
 @media (max-width: 860px) { .pickrow { flex-wrap: wrap; } .trackbtn { flex: 1 1 100%; justify-content: center; } }
 .callbox { display: grid; gap: 4px; }
 .bigdial { font: 700 44px/1 var(--font-mono); color: var(--blue); }
+/* On phones and tablets the game tabs become separate buttons with their own outline */
+@media (max-width: 860px) {
+  .tabs[aria-label="Game mode"] { background: transparent; border: 0; box-shadow: none; padding: 0; gap: 8px; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tabs[aria-label="Game mode"] button { background: var(--panel); border: 1.5px solid var(--rule); border-radius: 12px; padding: 11px 10px; box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent); }
+  .tabs[aria-label="Game mode"] button:hover:not([aria-pressed="true"]) { border-color: var(--muted); background: var(--panel); }
+  .tabs[aria-label="Game mode"] button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .tabs[aria-label="Game mode"] button:last-child:nth-child(odd) { grid-column: span 2; }
+}
 /* Complete tab */
 .trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
 .trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
