@@ -92,6 +92,8 @@ h1 span { color: var(--muted); font-weight: 600; }
 .mk.good circle { fill: color-mix(in srgb, var(--good) 60%, transparent); stroke: var(--good); }
 .mk.bad circle { fill: color-mix(in srgb, var(--bad) 60%, transparent); stroke: var(--bad); }
 .mk.done circle { stroke: var(--good); }
+.mk.capmk circle { fill: var(--ink); stroke: var(--panel); stroke-width: 2; }
+.mk.capmk.sel circle, .mk.capmk:hover circle { fill: var(--bad); }
 .wc { stroke: var(--border); stroke-width: .6; vector-effect: non-scaling-stroke; transition: fill .15s; }
 .wc.play { fill: color-mix(in srgb, var(--good) 50%, var(--land)); cursor: pointer; }
 .wc.play:hover, .wc.play.hot { fill: var(--accent); }
@@ -557,7 +559,7 @@ function buildMap() {
   let defs = "", fills = "", edges = "", outlines = "", extras = "";
   for (const d of Object.values(D.LAND)) fills += `<path class="land0" d="${d}"/>`;
   for (const [name, d] of Object.entries(D.STATES)) {
-    const cid = "c-" + ck + "-" + Object.keys(D.STATES).indexOf(name);
+    const cid = "c-" + ck.replace(/[^A-Za-z0-9]/g, "") + "-" + Object.keys(D.STATES).indexOf(name);
     const rs = regionsOf(name), multi = rs.length > 1;
     if (multi) {
       defs += `<clipPath id="${cid}"><path d="${d}"/></clipPath>`;
@@ -580,23 +582,23 @@ function buildMap() {
   }
   for (const m of D.MARKERS) {
     if (m.label) extras += `<g class="call" data-r="${m.id}"><rect x="${m.x}" y="${m.y - 15}" width="210" height="30" rx="8"/><text x="${m.x + 105}" y="${m.y + 5}" text-anchor="middle">${m.label}</text></g>`;
-    else extras += `<g class="mk" data-r="${m.id}"><circle cx="${m.x}" cy="${m.y}" r="${D.W * 0.011}"/></g>`;
+    else extras += `<g class="mk${m.id.endsWith("cap") ? " capmk" : ""}" data-r="${m.id}"><circle cx="${m.x}" cy="${m.y}" r="${(D.VIEW ? D.VIEW[2] * 0.02 : D.W * 0.011)}"/></g>`;
   }
   svg.innerHTML = `<defs>${defs}</defs><g>${fills}</g><g>${edges}</g><g>${outlines}</g>${extras}`;
   svg.setAttribute("aria-label", `Area code map of ${C.the}`);
-  setFrame(D.W, D.H, D.PLACES, C.placeNames);
+  setFrame(D.W, D.H, D.PLACES, C.placeNames, D.VIEW);
 }
-function setFrame(W, H, places, names) {
+function setFrame(W, H, places, names, view) {
   PLACES = places;
   placeSel.innerHTML = Object.entries(names).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
-  FULL = [0, 0, W, H]; AR = W / H; MINW = W * 0.065;
+  FULL = view || [0, 0, W, H]; AR = FULL[2] / FULL[3]; MINW = FULL[2] * 0.065;
   cancelAnimationFrame(zoomAnim); vb = FULL.slice(); goal = FULL.slice(); applyVB(FULL);
 }
 function setCountry(k) {
   if (capQ) clearTimeout(capQ.timer); capQ = null;
   tip.hidden = true; view = "country"; ck = k; C = COUNTRIES[k];
   ({ CODES, REGIONS, ABBR } = C.data); codeMap = C.codeMap; regMap = C.regMap;
-  countrySel.value = k; worldBtn.setAttribute("aria-pressed", "false");
+  countrySel.value = C.mini ? "" : k; worldBtn.setAttribute("aria-pressed", "false");
   document.getElementById("dial").textContent = "· " + C.dial;
   save("aca-country", k);
   buildMap();
@@ -660,6 +662,35 @@ function renderWorldCard(info) {
 }
 function hotWorld(id) { svg.querySelectorAll(".wc.hot").forEach(e => e.classList.remove("hot")); svg.querySelectorAll(`[data-w="${CSS.escape(id)}"]`).forEach(e => e.classList.add("hot")); }
 function enterCountry(k) { setCountry(k); setMode(mode); }
+// Countries that are not playable still open as a simple map: one code for the whole country,
+// plus a spot for the capital where its own area code is known.
+function ensureMini(n) {
+  const key = "w:" + n;
+  if (COUNTRIES[key]) return key;
+  const wc = WORLD.countries.find(c => c.n === n);
+  if (!wc || n === "Fr. S. Antarctic Lands" || n === "Antarctica") return null;
+  const nm = niceName(n), dial = capDial(n) || "", cap = WORLD.caps.find(c => c.n === n);
+  let code, city, note;
+  if (cap) { code = cap.code; city = cap.city; note = `${cap.city} uses the area code ${cap.code}. The other area codes of ${nm} are not in the game, so the whole country is shown with the capital's code.`; }
+  else if (n === "N. Cyprus") { code = "392"; city = "Northern Cyprus"; note = NOTES[n][1]; }
+  else if (n === "W. Sahara") { code = "0528"; city = "Western Sahara"; note = NOTES[n][1]; }
+  else { code = dial.split(" ")[0]; city = nm; note = NOTES[n] ? NOTES[n][1] + ` The whole country just uses the calling code ${code}.` : `${nm} has no area codes. Every number is dialled the same way across the country, so the whole country just uses the calling code ${code}.`; }
+  const tmp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  tmp.setAttribute("d", wc.d); svg.appendChild(tmp); const bb = tmp.getBBox(); tmp.remove();
+  const ar = 1.5, w = Math.max(bb.width * 1.25, bb.height * 1.25 * ar, 12), h = w / ar;
+  const VIEW = [bb.x + bb.width / 2 - w / 2, bb.y + bb.height / 2 - h / 2, w, h];
+  const id = "m" + n.replace(/[^A-Za-z]/g, "");
+  const REGIONS = [{ id, s: nm, n: "All of " + nm, codes: [code], d: wc.d, one: 1 }];
+  const MARKERS = [];
+  if (cap) { REGIONS.push({ id: id + "cap", s: nm, n: cap.city + " (capital)", codes: [code], d: "" }); MARKERS.push({ id: id + "cap", x: cap.x, y: cap.y }); }
+  const data = { W: WORLD.W, H: WORLD.H, VIEW, STATES: { [nm]: wc.d }, EDGES: { [nm]: "" }, CENT: {}, ABBR: { [nm]: nm }, LAND: {}, MARKERS, REGIONS,
+    CODES: [{ code, city: cap ? cap.city : "All of " + nm, major: true, states: [nm], regions: [] }], PLACES: { all: VIEW } };
+  const K = { name: nm, the: nm, dial: dial.split(" ")[0], unit: "country", start: code, data, placeNames: { all: "Whole country" }, note, mini: true };
+  K.codeMap = { [code]: data.CODES[0] }; K.regMap = {};
+  for (const r of REGIONS) { K.regMap[r.id] = r; data.CODES[0].regions.push(r.id); }
+  COUNTRIES[key] = K;
+  return key;
+}
 
 // ---------- Capitals quiz (on the world map) ----------
 // Capital city and its area code, keyed by the country's name on the world map.
@@ -831,7 +862,7 @@ function clearMarks(keepDone) {
 let PLACES = {}, FULL = [0, 0, 1065, 680], AR = 1065 / 680, MINW = 70, vb = FULL.slice(), goal = FULL.slice(), zoomAnim;
 function clampVB(v) {
   const w = Math.min(FULL[2], Math.max(MINW, v[2])), h = w / AR;
-  return [Math.min(FULL[2] - w, Math.max(0, v[0])), Math.min(FULL[3] - h, Math.max(0, v[1])), w, h];
+  return [Math.min(FULL[0] + FULL[2] - w, Math.max(FULL[0], v[0])), Math.min(FULL[1] + FULL[3] - h, Math.max(FULL[1], v[1])), w, h];
 }
 function applyVB(v) {
   vb = clampVB(v);
@@ -925,7 +956,9 @@ svg.addEventListener("click", e => {
     if (!w) return;
     if (capQ) { if (capQ.m === "find" && capQ.phase === "ask" && (w.classList.contains("wc") || w.classList.contains("small"))) capFind(w.dataset.w); return; }
     const info = worldInfo(w.dataset.w);
-    if (!info.k) { renderWorldCard(info); hotWorld(w.dataset.w); } else enterCountry(info.k);
+    if (info.k) return enterCountry(info.k);
+    const mk = w.classList.contains("wc") || w.classList.contains("capdot") ? ensureMini(w.dataset.w) : null;
+    if (mk) { setCountry(mk); setMode("explore"); } else { renderWorldCard(info); hotWorld(w.dataset.w); }
     return;
   }
   const t = e.target.closest("[data-r]");
@@ -944,7 +977,7 @@ svg.addEventListener("mousemove", e => {
     if (!w) { tip.hidden = true; return; }
     const info = worldInfo(w.dataset.w), box = mapbox.getBoundingClientRect(), n = w.dataset.w;
     if (capQ) tip.textContent = capQ.phase === "ask" ? info.name : capQ.set === "dial" ? `${info.name} · ${capDial(n) || ""}` : CAPITALS[n] ? `${info.name} · ${CAPITALS[n][0]} · ${CAPITALS[n][1]}` : info.name;
-    else tip.textContent = `${info.name}${info.dial ? " · " + info.dial : ""} · ${info.k ? "click to play" : info.kind === "none" ? "no area codes" : info.kind === "fg" ? "area code 0594" : info.kind === "note" ? "click to read" : "not in the game yet"}`;
+    else tip.textContent = `${info.name}${info.dial ? " · " + info.dial : ""} · ${info.k ? "click to play" : info.kind === "none" ? "no area codes · click to open" : info.kind === "fg" ? "area code 0594" : info.kind === "note" ? "click to open" : "click to open"}`;
     tip.hidden = false;
     tip.style.left = Math.min(box.width - 80, Math.max(80, e.clientX - box.left)) + "px"; tip.style.top = (e.clientY - box.top) + "px";
     return;
@@ -1116,7 +1149,7 @@ function detailHTML(id, hit) {
 function bindGo(root, fn) { root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => fn(b.dataset.go)); }
 function explore(id, hit) {
   clearMarks(); mark(id, "sel");
-  card.innerHTML = detailHTML(id, hit) + `<p class="small">Click any region on the map to study it.</p>`;
+  card.innerHTML = detailHTML(id, hit) + (C.mini ? `<p class="small">This country has just one code, so there is no region game here. Try the calling-codes quiz on the world map, or go back with the World map button.</p>` : `<p class="small">Click any region on the map to study it.</p>`);
   bindGo(card, explore);
 }
 
@@ -1215,10 +1248,10 @@ function zoomToRegions(ids) {
 }
 function pickResult(h) {
   if (h.k === "world") {
-    showWorld(worldInfo(h.c.capOnly)); hotWorld(h.c.capOnly);
-    const dot = svg.querySelector(`.capdot[data-w="${CSS.escape(h.c.capOnly)}"]`);
-    if (dot) { dot.classList.add("target"); const bb = dot.getBBox(); const w = FULL[2] * 0.25, hh = w / AR; animateTo([bb.x - w / 2, bb.y - hh / 2, w, hh]); }
-    return;
+    const key = ensureMini(h.c.capOnly); if (!key) return;
+    setCountry(key);
+    const capId = COUNTRIES[key].data.REGIONS[1].id;
+    showDetail(capId, h.c.code); return;
   }
   if (h.k !== ck) setCountry(h.k);
   const c = codeMap[h.c.code];
@@ -1242,6 +1275,7 @@ function showDetail(id, hit) {
 // ---------- Modes and countries ----------
 function setMode(m) {
   if (view === "world") { mode = m; return enterCountry(COUNTRIES[load("aca-country")] ? load("aca-country") : "us"); }
+  if ((m === "find" || m === "pick") && C.mini) m = "explore";
   mode = m; clearTimeout(state.timer);
   for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
   if (m === "explore") { state = {}; explore(codeMap[C.start].regions[0]); }
