@@ -134,6 +134,26 @@ h1 span { color: var(--muted); font-weight: 600; }
 .wmk.capdot.target circle { fill: var(--accent); r: 3; }
 .wmk text { font: 600 11px var(--font-body); fill: var(--ink); pointer-events: none; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .groups { display: grid; gap: 14px; }
+.clist summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; font: 600 14px var(--font-body); background: var(--bg); }
+.clist summary::-webkit-details-marker { display: none; }
+.clist summary:hover { border-color: var(--ink); }
+.clist .chev { transition: transform .15s; }
+.clist[open] .chev { transform: rotate(180deg); }
+.area { display: grid; gap: 10px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.circ { display: flex; align-items: center; gap: 10px; font: 600 14px var(--font-body); cursor: pointer; }
+.circ input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.circ .dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; flex: none; }
+.circ .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform .15s; }
+.circ input:checked + .dot::after { transform: scale(1); }
+.circ input:focus-visible + .dot { outline: 3px solid var(--accent); outline-offset: 2px; }
+.arealist { display: grid; gap: 2px; max-height: 220px; overflow: auto; border: 1px solid var(--rule); border-radius: 10px; padding: 6px; }
+.arealist label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.arealist label:hover { background: var(--bg); }
+.arealist input { accent-color: var(--good); }
+.arealist span { flex: 1; min-width: 0; }
+.arealist small { font: 500 12px var(--font-mono); color: var(--muted); }
+.rg.dim path { opacity: .28; }
+.mk.dim circle { opacity: .28; }
 .conts button[aria-pressed="true"] { background: var(--key); color: var(--key-ink); border-color: var(--key); }
 .quizzes summary { cursor: pointer; }
 .qgrid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; align-items: center; margin-top: 10px; }
@@ -704,8 +724,10 @@ function renderWorldCard(info) {
   card.innerHTML = `${info ? `<div class="infobox"><b>${info.name} <span class="small">${info.dial}</span></b><p class="small">${why}</p></div>` : ""}
     <div><p class="label">World map</p><p class="small" style="margin-top:4px">Click any country on the map, or zoom in on a part of the world:</p></div>
     <div class="chips conts"><button data-cont="" aria-pressed="${!cont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
-    ${cont ? `<div><p class="label" style="margin-bottom:6px">Countries with area-code maps in ${cont[1]}</p><div class="chips">${cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).map(chip).join("")}</div>
-      <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></div>` : ""}
+    ${cont ? (() => { const ks = cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).sort((a, b) => COUNTRIES[a].name.localeCompare(COUNTRIES[b].name));
+      return `<details class="clist"><summary><span>Countries with area-code maps in ${cont[1]} (${ks.length})</span><span class="chev" aria-hidden="true">⌵</span></summary>
+      <div class="chips" style="margin-top:10px">${ks.map(chip).join("")}</div>
+      <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></details>`; })() : ""}
     <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>Full area-code map</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span></div>
     <details class="quizzes"><summary class="label">Quizzes on the world map</summary>
       <div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
@@ -1093,7 +1115,92 @@ const best = load("aca-best3") || {};
 
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function majors() { const m = CODES.filter(c => c.major); return m.length >= 5 ? m : CODES; }
-function poolCodes() { return pool === "major" ? majors() : CODES; }
+// ---------- Practice areas: pick parts of a big country to learn ----------
+// A country with many codes is split into 3 to 8 areas: its states when there is a sensible number,
+// otherwise groups of nearby regions or states, named after the biggest city in each group.
+function pathCenter(d) {
+  const nums = (d || "").match(/-?\d+(\.\d+)?/g); if (!nums) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let i = 0; i + 1 < nums.length; i += 2) { const x = +nums[i], y = +nums[i + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  return [(x0 + x1) / 2, (y0 + y1) / 2];
+}
+function kmeans(pts, k) {
+  const cs = [pts[0].p];
+  while (cs.length < k) { let best = null, bd = -1; for (const q of pts) { const d = Math.min(...cs.map(c => (c[0] - q.p[0]) ** 2 + (c[1] - q.p[1]) ** 2)); if (d > bd) { bd = d; best = q.p; } } cs.push(best); }
+  let as = [];
+  for (let it = 0; it < 20; it++) {
+    as = pts.map(q => { let bi = 0, bd = Infinity; cs.forEach((c, i) => { const d = (c[0] - q.p[0]) ** 2 + (c[1] - q.p[1]) ** 2; if (d < bd) { bd = d; bi = i; } }); return bi; });
+    cs.forEach((c, i) => { const m = pts.filter((_, j) => as[j] === i); if (m.length) cs[i] = [m.reduce((a, q) => a + q.p[0], 0) / m.length, m.reduce((a, q) => a + q.p[1], 0) / m.length]; });
+  }
+  return as;
+}
+function sectionsOf(K) {
+  if (K.sections !== undefined) return K.sections;
+  const D = K.data, states = Object.keys(D.STATES);
+  if (K.mini || D.CODES.length < 20) return (K.sections = null);
+  const regsOf = st => D.REGIONS.filter(r => r.s === st);
+  let groups;
+  if (K === COUNTRIES.us) {
+    const US_AREAS = { "Northeast": "CT ME MA NH RI VT NJ NY PA", "Mid-Atlantic & Southeast": "DE MD DC VA WV NC SC GA FL", "Midwest": "IL IN MI OH WI IA KS MN MO NE ND SD",
+      "South": "AL KY MS TN AR LA OK TX", "Mountain West": "AZ CO ID MT NV NM UT WY", "Pacific, Alaska & Hawaii": "AK CA HI OR WA", "Territories": "PR VI GU MP AS" };
+    groups = Object.entries(US_AREAS).map(([name, abs]) => { const set = new Set(abs.split(" ")); return { name, regions: D.REGIONS.filter(r => set.has(D.ABBR[r.s])) }; });
+  } else if (states.length >= 3 && states.length <= 30) groups = states.map(st => ({ name: st, regions: regsOf(st) }));
+  else {
+    const units = states.length > 30 ? states.map(st => ({ p: pathCenter(D.STATES[st]), regions: regsOf(st) }))
+                                     : D.REGIONS.filter(r => r.d).map(r => ({ p: pathCenter(r.d), regions: [r] }));
+    const k = Math.max(4, Math.min(8, Math.round(units.length / 8)));
+    const as = kmeans(units.filter(u => u.p), k), ok = units.filter(u => u.p);
+    groups = [...Array(k)].map((_, i) => ({ regions: ok.filter((_, j) => as[j] === i).flatMap(u => u.regions) })).filter(g => g.regions.length);
+    for (const g of groups) {
+      const codes = g.regions.flatMap(r => r.codes).map(c => K.codeMap[c]);
+      const big = codes.find(c => c.major) || codes[0];
+      g.name = "Around " + (big.city.startsWith("All of ") ? big.city.slice(7) : big.city);
+    }
+  }
+  groups = groups.filter(g => g.regions.length);
+  for (const g of groups) { g.codes = new Set(g.regions.flatMap(r => r.codes)); g.ids = new Set(g.regions.map(r => r.id)); }
+  groups.sort((a, b) => a.name.localeCompare(b.name));
+  return (K.sections = groups.length >= 3 ? groups : null);
+}
+function areaState() {
+  const secs = sectionsOf(C); if (!secs) return null;
+  const st = load("aca-area-" + ck) || {};
+  return { on: !!st.on, sel: new Set(Array.isArray(st.sel) ? st.sel.filter(n => secs.some(s => s.name === n)) : secs.map(s => s.name)) };
+}
+function saveArea(a) { save("aca-area-" + ck, { on: a.on, sel: [...a.sel] }); }
+function areaCodes() {
+  const a = areaState(); if (!a || !a.on) return null;
+  const set = new Set(); for (const sec of sectionsOf(C)) if (a.sel.has(sec.name)) sec.codes.forEach(c => set.add(c));
+  return set;
+}
+function applyAreaDim() {
+  const a = areaState(), on = a && a.on && (mode === "find" || mode === "pick");
+  const ids = new Set(); if (on) for (const sec of sectionsOf(C)) if (a.sel.has(sec.name)) sec.ids.forEach(i => ids.add(i));
+  svg.querySelectorAll(".rg, .mk").forEach(e => e.classList.toggle("dim", on && !ids.has(e.dataset.r)));
+}
+function areaUI() {
+  const a = areaState(); if (!a) return "";
+  const secs = sectionsOf(C), n = areaCodes()?.size;
+  return `<div class="area"><label class="circ"><input type="checkbox" id="area-on"${a.on ? " checked" : ""}><span class="dot" aria-hidden="true"></span>Practice chosen areas only</label>
+    ${a.on ? `<div class="arealist">${secs.map(sec => `<label><input type="checkbox" data-area="${sec.name}"${a.sel.has(sec.name) ? " checked" : ""}><span>${sec.name}</span><small>${sec.codes.size}</small></label>`).join("")}</div>
+    <div class="row"><button class="btn" id="area-all">Choose all</button><button class="btn" id="area-none">Clear all</button></div>
+    <p class="small">${n ? `${n} codes chosen. Faded parts of the map are not asked about.` : "Choose at least one area to play."}</p>` : ""}</div>`;
+}
+function bindArea() {
+  const a = areaState(); if (!a) return;
+  const go = () => { saveArea(a); newGame(); };
+  card.querySelector("#area-on").onchange = e => { a.on = e.target.checked; go(); };
+  card.querySelectorAll("[data-area]").forEach(b => b.onchange = () => { b.checked ? a.sel.add(b.dataset.area) : a.sel.delete(b.dataset.area); go(); });
+  const all = card.querySelector("#area-all"), none = card.querySelector("#area-none");
+  if (all) all.onclick = () => { sectionsOf(C).forEach(sec => a.sel.add(sec.name)); go(); };
+  if (none) none.onclick = () => { a.sel.clear(); go(); };
+}
+function poolCodes() {
+  let base = pool === "major" ? majors() : CODES;
+  const ok = areaCodes();
+  if (ok) { const f = base.filter(c => ok.has(c.code)); base = f.length ? f : CODES.filter(c => ok.has(c.code)); }
+  return base;
+}
 const stName = s => s === "District of Columbia" ? "DC" : ck === "se" ? s + " County" : s;
 const statesOf = c => c.states.map(stName).join(" & ");
 const where = c => c.city.startsWith("All of ") ? c.city.slice(7) : c.states.length > 1 || c.city === c.states[0] ? c.city : `${c.city}, ${statesOf(c)}`;
@@ -1102,7 +1209,7 @@ const fullPlace = c => { const rn = regionNames(c); return rn && rn !== c.city &
 const bestKey = () => ck + "-" + mode + "-" + pool;
 
 function newGame() {
-  clearMarks();
+  clearMarks(); applyAreaDim();
   ROUNDS = Math.min(10, poolCodes().length);
   state = { qs: shuffle(poolCodes()).slice(0, ROUNDS), i: 0, score: 0, streak: 0, misses: [], phase: "ask", hint: false };
   ask();
@@ -1116,15 +1223,17 @@ function header() {
 function poolSeg() {
   return `<div><p class="label" style="margin-bottom:6px">Codes to play · ${C.name}</p><div class="seg" role="group" aria-label="Code set">
     <button id="p-major" aria-pressed="${pool === "major"}">Big cities (${majors().length})</button>
-    <button id="p-all" aria-pressed="${pool === "all"}">All codes (${CODES.length})</button></div></div>`;
+    <button id="p-all" aria-pressed="${pool === "all"}">All codes (${CODES.length})</button></div></div>${areaUI()}`;
 }
 function bindPool() {
   card.querySelector("#p-major").onclick = () => { pool = "major"; save("aca-pool", pool); newGame(); };
   card.querySelector("#p-all").onclick = () => { pool = "all"; save("aca-pool", pool); newGame(); };
+  bindArea();
 }
 const keys = code => `<div class="keys pop${code.length > 3 ? " k4" : ""}" aria-label="Area code ${code}">${[...code].map(d => `<span>${d}</span>`).join("")}</div>`;
 
 function ask() {
+  if (!state.qs.length) { card.innerHTML = `<p class="label">${C.name}</p><p class="q">No codes to play</p><p class="hint">All the chosen areas are empty. Choose at least one area below.</p>${poolSeg()}`; bindPool(); return; }
   clearMarks(true);
   state.phase = "ask"; state.hint = false;
   const c = cur();
@@ -1368,6 +1477,7 @@ function showDetail(id, hit) {
 
 // ---------- Modes and countries ----------
 function setMode(m) {
+  setTimeout(applyAreaDim);
   if (view === "world") { mode = m; return enterCountry(COUNTRIES[load("aca-country")] ? load("aca-country") : "us"); }
   if ((m === "find" || m === "pick") && C.mini) m = "explore";
   mode = m; clearTimeout(state.timer);
