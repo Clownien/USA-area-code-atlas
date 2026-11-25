@@ -8,6 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
 /* Layout: a switchboard console. Map fills the left, the call card sits right; on phones the card stacks above the map. */
@@ -27,8 +28,8 @@
   --bad: #c43d2b;
   --key: #13221d;
   --key-ink: #f4f7f5;
-  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif, "Noto Color Emoji";
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif, "Noto Color Emoji";
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -134,6 +135,7 @@ h1 span { color: var(--muted); font-weight: 600; }
 .wmk.capdot.target circle { fill: var(--accent); r: 3; }
 .wmk text { font: 600 11px var(--font-body); fill: var(--ink); pointer-events: none; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .groups { display: grid; gap: 14px; }
+.flag { font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; font-style: normal; line-height: 1; }
 .clist summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; font: 600 14px var(--font-body); background: var(--bg); }
 .clist summary::-webkit-details-marker { display: none; }
 .clist summary:hover { border-color: var(--ink); }
@@ -556,6 +558,11 @@ const PLAY_NAMES = { "United States of America": "us", "Canada": "ca", "Mexico":
 const DIAL = {"Afghanistan":"+93","Albania":"+355","Algeria":"+213","Angola":"+244","Armenia":"+374","Austria":"+43","Azerbaijan":"+994","Bangladesh":"+880","Belarus":"+375","Belgium":"+32","Belize":"+501","Benin":"+229","Bhutan":"+975","Bosnia and Herz.":"+387","Botswana":"+267","Brunei":"+673","Bulgaria":"+359","Burkina Faso":"+226","Burundi":"+257","Cambodia":"+855","Cameroon":"+237","Central African Rep.":"+236","Chad":"+235","Congo":"+242","Costa Rica":"+506","Croatia":"+385","Cyprus":"+357","Czechia":"+420","Côte d'Ivoire":"+225","Dem. Rep. Congo":"+243","Denmark":"+45","Djibouti":"+253","Egypt":"+20","El Salvador":"+503","Eq. Guinea":"+240","Eritrea":"+291","Estonia":"+372","Ethiopia":"+251","Falkland Is.":"+500","Fiji":"+679","Finland":"+358","Fr. S. Antarctic Lands":"+262","Gabon":"+241","Gambia":"+220","Georgia":"+995","Ghana":"+233","Greece":"+30","Greenland":"+299","Guatemala":"+502","Guinea":"+224","Guinea-Bissau":"+245","Guyana":"+592","Haiti":"+509","Honduras":"+504","Hungary":"+36","Iceland":"+354","Indonesia":"+62","Iran":"+98","Iraq":"+964","Ireland":"+353","Israel":"+972","Jordan":"+962","Kazakhstan":"+7","Kenya":"+254","Kosovo":"+383","Kuwait":"+965","Kyrgyzstan":"+996","Laos":"+856","Latvia":"+371","Lebanon":"+961","Lesotho":"+266","Liberia":"+231","Libya":"+218","Lithuania":"+370","Luxembourg":"+352","Macedonia":"+389","Madagascar":"+261","Malawi":"+265","Malaysia":"+60","Mali":"+223","Mauritania":"+222","Moldova":"+373","Mongolia":"+976","Montenegro":"+382","Morocco":"+212","Mozambique":"+258","Myanmar":"+95","N. Cyprus":"+90","Namibia":"+264","Nepal":"+977","Netherlands":"+31","New Caledonia":"+687","New Zealand":"+64","Nicaragua":"+505","Niger":"+227","Nigeria":"+234","North Korea":"+850","Norway":"+47","Oman":"+968","Pakistan":"+92","Palestine":"+970","Panama":"+507","Papua New Guinea":"+675","Philippines":"+63","Poland":"+48","Portugal":"+351","Qatar":"+974","Romania":"+40","Russia":"+7","Rwanda":"+250","S. Sudan":"+211","Saudi Arabia":"+966","Senegal":"+221","Serbia":"+381","Sierra Leone":"+232","Slovakia":"+421","Slovenia":"+386","Solomon Is.":"+677","Somalia":"+252","Somaliland":"+252","South Korea":"+82","Sri Lanka":"+94","Sudan":"+249","Suriname":"+597","Switzerland":"+41","Syria":"+963","Taiwan":"+886","Tajikistan":"+992","Tanzania":"+255","Thailand":"+66","Timor-Leste":"+670","Togo":"+228","Tunisia":"+216","Turkey":"+90","Turkmenistan":"+993","Uganda":"+256","Ukraine":"+380","United Arab Emirates":"+971","Uzbekistan":"+998","Vanuatu":"+678","Vietnam":"+84","W. Sahara":"+212","Yemen":"+967","Zambia":"+260","Zimbabwe":"+263","eSwatini":"+268","Saint Pierre and Miquelon":"+508","Antarctica":""};
 const NICE = {"Bosnia and Herz.":"Bosnia and Herzegovina","Central African Rep.":"Central African Republic","Dem. Rep. Congo":"DR Congo","Dominican Rep.":"Dominican Republic","Eq. Guinea":"Equatorial Guinea","Falkland Is.":"Falkland Islands","Fr. S. Antarctic Lands":"French Southern Lands","N. Cyprus":"Northern Cyprus","S. Sudan":"South Sudan","Solomon Is.":"Solomon Islands","W. Sahara":"Western Sahara","United States of America":"United States","eSwatini":"Eswatini","Macedonia":"North Macedonia"};
 const niceName = n => NICE[n] || n;
+// Flags: emoji built from each country's two-letter ISO code.
+const ISO2 = {"Afghanistan": "AF", "Albania": "AL", "Algeria": "DZ", "Angola": "AO", "Argentina": "AR", "Armenia": "AM", "Australia": "AU", "Austria": "AT", "Azerbaijan": "AZ", "Bahamas": "BS", "Bangladesh": "BD", "Belarus": "BY", "Belgium": "BE", "Belize": "BZ", "Benin": "BJ", "Bhutan": "BT", "Bolivia": "BO", "Bosnia and Herz.": "BA", "Botswana": "BW", "Brazil": "BR", "Brunei": "BN", "Bulgaria": "BG", "Burkina Faso": "BF", "Burundi": "BI", "Cambodia": "KH", "Cameroon": "CM", "Canada": "CA", "Central African Rep.": "CF", "Chad": "TD", "Chile": "CL", "China": "CN", "Colombia": "CO", "Congo": "CG", "Costa Rica": "CR", "Croatia": "HR", "Cuba": "CU", "Cyprus": "CY", "Czechia": "CZ", "Côte d'Ivoire": "CI", "Dem. Rep. Congo": "CD", "Denmark": "DK", "Djibouti": "DJ", "Dominican Rep.": "DO", "Ecuador": "EC", "Egypt": "EG", "El Salvador": "SV", "Eq. Guinea": "GQ", "Eritrea": "ER", "Estonia": "EE", "Ethiopia": "ET", "Falkland Is.": "FK", "Fiji": "FJ", "Finland": "FI", "Fr. S. Antarctic Lands": "TF", "France": "FR", "Gabon": "GA", "Gambia": "GM", "Georgia": "GE", "Germany": "DE", "Ghana": "GH", "Greece": "GR", "Greenland": "GL", "Guatemala": "GT", "Guinea": "GN", "Guinea-Bissau": "GW", "Guyana": "GY", "Haiti": "HT", "Honduras": "HN", "Hungary": "HU", "Iceland": "IS", "India": "IN", "Indonesia": "ID", "Iran": "IR", "Iraq": "IQ", "Ireland": "IE", "Israel": "IL", "Italy": "IT", "Jamaica": "JM", "Japan": "JP", "Jordan": "JO", "Kazakhstan": "KZ", "Kenya": "KE", "Kosovo": "XK", "Kuwait": "KW", "Kyrgyzstan": "KG", "Laos": "LA", "Latvia": "LV", "Lebanon": "LB", "Lesotho": "LS", "Liberia": "LR", "Libya": "LY", "Lithuania": "LT", "Luxembourg": "LU", "Macedonia": "MK", "Madagascar": "MG", "Malawi": "MW", "Malaysia": "MY", "Mali": "ML", "Mauritania": "MR", "Mexico": "MX", "Moldova": "MD", "Mongolia": "MN", "Montenegro": "ME", "Morocco": "MA", "Mozambique": "MZ", "Myanmar": "MM", "Namibia": "NA", "Nepal": "NP", "Netherlands": "NL", "New Caledonia": "NC", "New Zealand": "NZ", "Nicaragua": "NI", "Niger": "NE", "Nigeria": "NG", "North Korea": "KP", "Norway": "NO", "Oman": "OM", "Pakistan": "PK", "Palestine": "PS", "Panama": "PA", "Papua New Guinea": "PG", "Paraguay": "PY", "Peru": "PE", "Philippines": "PH", "Poland": "PL", "Portugal": "PT", "Puerto Rico": "PR", "Qatar": "QA", "Romania": "RO", "Russia": "RU", "Rwanda": "RW", "S. Sudan": "SS", "Saudi Arabia": "SA", "Senegal": "SN", "Serbia": "RS", "Sierra Leone": "SL", "Slovakia": "SK", "Slovenia": "SI", "Solomon Is.": "SB", "Somalia": "SO", "South Africa": "ZA", "South Korea": "KR", "Spain": "ES", "Sri Lanka": "LK", "Sudan": "SD", "Suriname": "SR", "Sweden": "SE", "Switzerland": "CH", "Syria": "SY", "Taiwan": "TW", "Tajikistan": "TJ", "Tanzania": "TZ", "Thailand": "TH", "Timor-Leste": "TL", "Togo": "TG", "Trinidad and Tobago": "TT", "Tunisia": "TN", "Turkey": "TR", "Turkmenistan": "TM", "Uganda": "UG", "Ukraine": "UA", "United Arab Emirates": "AE", "United Kingdom": "GB", "United States of America": "US", "Uruguay": "UY", "Uzbekistan": "UZ", "Vanuatu": "VU", "Venezuela": "VE", "Vietnam": "VN", "W. Sahara": "EH", "Yemen": "YE", "Zambia": "ZM", "Zimbabwe": "ZW", "eSwatini": "SZ", "Singapore": "SG", "Hong Kong": "HK", "Macau": "MO", "Malta": "MT", "Bahrain": "BH", "Monaco": "MC", "Liechtenstein": "LI", "Andorra": "AD", "San Marino": "SM", "Vatican City": "VA", "Mauritius": "MU", "Maldives": "MV", "Seychelles": "SC", "Cape Verde": "CV", "Comoros": "KM", "São Tomé and Príncipe": "ST", "Samoa": "WS", "Tonga": "TO", "Jersey": "JE", "Guernsey": "GG", "Isle of Man": "IM", "Gibraltar": "GI", "Faroe Islands": "FO", "Réunion": "RE", "Mayotte": "YT", "French Polynesia": "PF", "Aruba": "AW", "Curaçao": "CW", "Bonaire": "BQ", "Kiribati": "KI", "Marshall Islands": "MH", "Micronesia": "FM", "Palau": "PW", "Nauru": "NR", "Tuvalu": "TV", "Saint Helena": "SH", "Bermuda": "BM", "Cayman Islands": "KY", "Dominican Republic": "DO", "U.S. Virgin Islands": "VI", "British Virgin Islands": "VG", "Anguilla": "AI", "Sint Maarten": "SX", "Saint Kitts and Nevis": "KN", "Antigua and Barbuda": "AG", "Montserrat": "MS", "Dominica": "DM", "Saint Lucia": "LC", "Saint Vincent and the Grenadines": "VC", "Barbados": "BB", "Grenada": "GD", "Turks and Caicos Islands": "TC", "Guadeloupe": "GP", "Martinique": "MQ", "Saint Pierre and Miquelon": "PM", "French Guiana": "GF", "Guam": "GU", "Northern Mariana Islands": "MP", "American Samoa": "AS", "United States": "US", "USA": "US", "UAE": "AE", "Bosnia and Herzegovina": "BA", "North Macedonia": "MK", "DR Congo": "CD", "Central African Republic": "CF", "Equatorial Guinea": "GQ", "Falkland Islands": "FK", "Northern Cyprus": "", "Western Sahara": "EH", "South Sudan": "SS", "Solomon Islands": "SB", "Eswatini": "SZ", "French Southern Lands": "TF"};
+const flagOf = n => { const c = ISO2[n] || (COUNTRIES[n] && COUNTRIES[n] !== COUNTRIES.cb ? n.toUpperCase() : ""); return c && c.length === 2 ? String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65)) : ""; };
+const flagKey = k => k === "cb" ? "🏝️" : k.startsWith("w:") ? flagOf(k.slice(2)) : flagOf(k);
+const fl = f => f ? `<span class="flag" aria-hidden="true">${f}</span> ` : "";
 // Places with a special answer, and small countries shown as dots on the world map.
 const NOTES = {
   "N. Cyprus": ["+90 392", "Northern Cyprus is reached through Turkey's +90, and the whole area uses the area code 392."],
@@ -647,7 +654,7 @@ function setCountry(k) {
   if (capQ) clearTimeout(capQ.timer); capQ = null;
   tip.hidden = true; view = "country"; ck = k; C = COUNTRIES[k];
   ({ CODES, REGIONS, ABBR } = C.data); codeMap = C.codeMap; regMap = C.regMap;
-  countryName.textContent = C.name; worldBtn.setAttribute("aria-pressed", "false");
+  countryName.innerHTML = fl(flagKey(k)) + C.name; worldBtn.setAttribute("aria-pressed", "false");
   document.getElementById("dial").textContent = "· " + C.dial;
   save("aca-country", k);
   buildMap();
@@ -715,13 +722,13 @@ function showContinent(key) {
   renderWorldCard();
 }
 function renderWorldCard(info) {
-  const chip = k => `<button data-k="${k}">${COUNTRIES[k].name}<small>${COUNTRIES[k].dial}</small></button>`;
+  const chip = k => `<button data-k="${k}">${fl(flagKey(k))}${COUNTRIES[k].name}<small>${COUNTRIES[k].dial}</small></button>`;
   const why = info && (info.kind === "none" ? `${info.name} has no area codes. Every phone number there has the same number of digits, and you dial it the same way anywhere in the country.`
     : info.kind === "note" ? info.text
     : info.kind === "fg" ? `French Guiana is part of France. The whole territory uses one area code, 0594, and from abroad you dial +594.`
     : `${info.name}: calling code ${info.dial || "not listed here"}.`);
   const cont = CONTINENTS.find(c => c[0] === worldCont);
-  card.innerHTML = `${info ? `<div class="infobox"><b>${info.name} <span class="small">${info.dial}</span></b><p class="small">${why}</p></div>` : ""}
+  card.innerHTML = `${info ? `<div class="infobox"><b>${fl(flagOf(info.name) || flagOf(Object.keys(NICE).find(k => NICE[k] === info.name) || ""))}${info.name} <span class="small">${info.dial}</span></b>${info.kind === "none" ? `<p class="small">No area codes</p>` : `<p class="small">${why}</p>`}</div>` : ""}
     <div><p class="label">World map</p><p class="small" style="margin-top:4px">Click any country on the map, or zoom in on a part of the world:</p></div>
     <div class="chips conts"><button data-cont="" aria-pressed="${!cont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
     ${cont ? (() => { const ks = cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).sort((a, b) => COUNTRIES[a].name.localeCompare(COUNTRIES[b].name));
@@ -923,14 +930,14 @@ const cBtn = document.getElementById("country-btn"), cPop = document.getElementB
 let cItems = [], cActive = 0;
 function allCountries() {
   const out = [], seen = new Set();
-  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, dial: COUNTRIES[k].dial, kind: "play", go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
+  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, flag: flagKey(k), dial: COUNTRIES[k].dial, kind: "play", go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
   for (const c of WORLD.countries) {
     if (PLAY_NAMES[c.n] || c.n === "Antarctica" || c.n === "Fr. S. Antarctic Lands") continue;
     const st = worldStatus(c), nm = niceName(c.n);
     if (seen.has(nm)) continue; seen.add(nm);
-    out.push({ name: nm, dial: capDial(c.n) || "", kind: st === "one" ? "one" : "none", go: () => { const k = ensureMini(c.n); if (k) { setCountry(k); setMode("explore"); } } });
+    out.push({ name: nm, flag: flagOf(c.n), dial: capDial(c.n) || "", kind: st === "one" ? "one" : "none", go: st === "one" ? () => { const k = ensureMini(c.n); if (k) { setCountry(k); setMode("explore"); } } : () => { showWorld(worldInfo(c.n)); hotWorld(c.n); } });
   }
-  for (const n of Object.keys(SMALL)) if (!seen.has(n)) out.push({ name: n, dial: SMALL[n], kind: "none", go: () => { showWorld(worldInfo(n)); hotWorld(n); } });
+  for (const n of Object.keys(SMALL)) if (!seen.has(n)) out.push({ name: n, flag: flagOf(n), dial: SMALL[n], kind: "none", go: () => { showWorld(worldInfo(n)); hotWorld(n); } });
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 const KIND_COLOR = { play: "color-mix(in srgb, var(--good) 50%, var(--land))", one: "color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))", none: "color-mix(in srgb, var(--rule) 70%, var(--panel))" };
@@ -940,7 +947,7 @@ function renderCList() {
              .sort((a, b) => (norm(b.name).startsWith(q) - norm(a.name).startsWith(q)) || a.name.localeCompare(b.name)) : all;
   cActive = 0;
   document.getElementById("ccount").textContent = q ? `${cItems.length} match${cItems.length === 1 ? "" : "es"}` : `${all.length} countries and territories · green ones have full area-code maps`;
-  cList.innerHTML = cItems.length ? cItems.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === 0}"><i style="background:${KIND_COLOR[c.kind]}"></i><span>${c.name}</span><small>${c.dial}</small></li>`).join("")
+  cList.innerHTML = cItems.length ? cItems.map((c, i) => `<li role="option" id="co-${i}" data-i="${i}" aria-selected="${i === 0}"><i style="background:${KIND_COLOR[c.kind]}"></i><span>${fl(c.flag)}${c.name}</span><small>${c.dial}</small></li>`).join("")
     : `<li class="group">No country matches “${cIn.value.replace(/[<>&"]/g, "")}”</li>`;
 }
 function openCPop() { cPop.hidden = false; cBtn.setAttribute("aria-expanded", "true"); cIn.value = ""; renderCList(); cIn.focus(); }
@@ -1057,8 +1064,8 @@ function tipText(r) {
   return mode === "pick" ? name : null;     // while a question is open, never give the answer away
 }
 let tipTimer;
-function showTip(e, r) {
-  const text = tipText(r);
+function showTip(e, r, worldName) {
+  const text = worldName ? (() => { const info = worldInfo(worldName), f = flagOf(worldName) || flagOf(info.name); return `${f ? f + " " : ""}${info.name}${info.dial ? " · " + info.dial : ""}`; })() : tipText(r);
   if (!text) { tip.hidden = true; return; }
   const box = mapbox.getBoundingClientRect();
   tip.textContent = text; tip.hidden = false;
@@ -1073,8 +1080,10 @@ svg.addEventListener("click", e => {
     if (capQ) { if (capQ.m === "find" && capQ.phase === "ask" && (w.classList.contains("wc") || w.classList.contains("small"))) capFind(w.dataset.w); return; }
     const info = worldInfo(w.dataset.w);
     if (info.k) return enterCountry(info.k);
-    const mk = w.classList.contains("wc") || w.classList.contains("capdot") ? ensureMini(w.dataset.w) : null;
-    if (mk) { setCountry(mk); setMode("explore"); } else { renderWorldCard(info); hotWorld(w.dataset.w); }
+    const isOne = w.classList.contains("wc") && worldStatus({ n: w.dataset.w }) === "one";
+    const mk = isOne ? ensureMini(w.dataset.w) : null;
+    if (mk) { setCountry(mk); setMode("explore"); }
+    else { showTip(e, null, w.dataset.w); clearTimeout(tipTimer); tipTimer = setTimeout(() => tip.hidden = true, 2500); }
     return;
   }
   const t = e.target.closest("[data-r]");
@@ -1093,7 +1102,7 @@ svg.addEventListener("mousemove", e => {
     if (!w) { tip.hidden = true; return; }
     const info = worldInfo(w.dataset.w), box = mapbox.getBoundingClientRect(), n = w.dataset.w;
     if (capQ) tip.textContent = capQ.phase === "ask" ? info.name : capQ.set === "dial" ? `${info.name} · ${capDial(n) || ""}` : CAPITALS[n] ? `${info.name} · ${CAPITALS[n][0]} · ${CAPITALS[n][1]}` : info.name;
-    else tip.textContent = `${info.name}${info.dial ? " · " + info.dial : ""} · ${info.k ? "click to play" : info.kind === "none" ? "no area codes · click to open" : info.kind === "fg" ? "area code 0594" : info.kind === "note" ? "click to open" : "click to open"}`;
+    else { const f = flagOf(n) || flagOf(info.name); tip.textContent = `${f ? f + " " : ""}${info.name}${info.dial ? " · " + info.dial : ""}${info.k ? " · click to play" : worldStatus({ n }) === "one" ? " · click to open" : ""}`; }
     tip.hidden = false;
     tip.style.left = Math.min(box.width - 80, Math.max(80, e.clientX - box.left)) + "px"; tip.style.top = (e.clientY - box.top) + "px";
     return;
