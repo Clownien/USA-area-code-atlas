@@ -674,10 +674,10 @@ function ensureMini(n) {
   if (!wc || n === "Fr. S. Antarctic Lands" || n === "Antarctica") return null;
   const nm = niceName(n), dial = capDial(n) || "", cap = WORLD.caps.find(c => c.n === n);
   let code, city, note;
-  if (cap) { code = cap.code; city = cap.city; note = `${cap.city} uses the area code ${cap.code}. The other area codes of ${nm} are not in the game, so the whole country is shown with the capital's code.`; }
+  if (cap) { code = cap.code; city = cap.city; note = `${cap.city}, the capital, uses the area code ${cap.code}. The other area codes of ${nm} are not in the game, so the whole country is shown with that code.`; }
   else if (n === "N. Cyprus") { code = "392"; city = "Northern Cyprus"; note = NOTES[n][1]; }
   else if (n === "W. Sahara") { code = "0528"; city = "Western Sahara"; note = NOTES[n][1]; }
-  else { code = dial.split(" ")[0]; city = nm; note = NOTES[n] ? NOTES[n][1] + ` The whole country just uses the calling code ${code}.` : `${nm} has no area codes. Every number is dialled the same way across the country, so the whole country just uses the calling code ${code}.`; }
+  else { code = dial.split(" ")[0]; city = nm; note = NOTES[n] ? NOTES[n][1] + ` ${code} is the country's calling code, not an area code.` : `${nm} has no area codes. ${code} is the country's calling code, the number you dial from abroad, and it covers the whole country.`; }
   const tmp = document.createElementNS("http://www.w3.org/2000/svg", "path");
   tmp.setAttribute("d", wc.d); svg.appendChild(tmp); const bb = tmp.getBBox(); tmp.remove();
   const ar = 1.5, w = Math.max(bb.width * 1.25, bb.height * 1.25 * ar, 12), h = w / ar;
@@ -685,9 +685,9 @@ function ensureMini(n) {
   const id = "m" + n.replace(/[^A-Za-z]/g, "");
   const REGIONS = [{ id, s: nm, n: "All of " + nm, codes: [code], d: wc.d, one: 1 }];
   const MARKERS = [];
-  if (cap) { REGIONS.push({ id: id + "cap", s: nm, n: cap.city + " (capital)", codes: [code], d: "" }); MARKERS.push({ id: id + "cap", x: cap.x, y: cap.y }); }
+
   const data = { W: WORLD.W, H: WORLD.H, VIEW, STATES: { [nm]: wc.d }, EDGES: { [nm]: "" }, CENT: {}, ABBR: { [nm]: nm }, LAND: {}, MARKERS, REGIONS,
-    CODES: [{ code, city: cap ? cap.city : "All of " + nm, major: true, states: [nm], regions: [] }], PLACES: { all: VIEW } };
+    CODES: [{ code, city: cap ? `Whole country (${cap.city} and the rest)` : /^\+/.test(code) ? "Calling code only: no area codes" : "Whole area", major: true, states: [nm], regions: [] }], PLACES: { all: VIEW } };
   const K = { name: nm, the: nm, dial: dial.split(" ")[0], unit: "country", start: code, data, placeNames: { all: "Whole country" }, note, mini: true };
   K.codeMap = { [code]: data.CODES[0] }; K.regMap = {};
   for (const r of REGIONS) { K.regMap[r.id] = r; data.CODES[0].regions.push(r.id); }
@@ -1142,12 +1142,13 @@ function detailHTML(id, hit) {
   const others = regionsOf(r.s).filter(x => x.id !== id);
   const total = CODES.filter(c => c.states.includes(r.s)).length;
   const title = r.one || r.n.startsWith("All of ") ? r.s : r.n;
-  return `<p class="label">${ABBR[r.s] === r.s ? r.s : ABBR[r.s]} · ${total} area code${total > 1 ? "s" : ""} in the ${C.unit}</p>
+  const lbl = C.mini ? (/^\+/.test(C.start) ? "no area codes" : "one area code for the whole country") : `${total} area code${total > 1 ? "s" : ""} in the ${C.unit}`;
+  return `<p class="label">${ABBR[r.s] === r.s ? r.s : ABBR[r.s]} · ${lbl}</p>
     <p class="state-name">${title}</p>${title === r.s ? "" : `<p class="small">${r.s}</p>`}
     <ul class="codes">${codes.map(c => `<li${c.code === hit ? ' class="hit"' : ""}><code>${c.code}</code><span>${c.city.startsWith("All of ") ? "Whole " + C.unit : c.city}</span></li>`).join("")}</ul>
     ${codes.length > 1 ? `<p class="small">These codes overlap: they all cover this same area, so neighbors can have different codes.</p>` : ""}
     ${others.length ? `<div><p class="label" style="margin-bottom:6px">Other parts of ${r.s}</p><ul class="others">${others.map(o => `<li><button data-go="${o.id}"><code>${o.codes.join(" ")}</code><span>${o.n}</span></button></li>`).join("")}</ul></div>` : ""}
-    <p class="small">${C.note} Region borders are approximate.</p>`;
+    <p class="small">${C.note}${C.mini ? "" : " Region borders are approximate."}</p>`;
 }
 function bindGo(root, fn) { root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => fn(b.dataset.go)); }
 function explore(id, hit) {
@@ -1253,8 +1254,7 @@ function pickResult(h) {
   if (h.k === "world") {
     const key = ensureMini(h.c.capOnly); if (!key) return;
     setCountry(key);
-    const capId = COUNTRIES[key].data.REGIONS[1].id;
-    showDetail(capId, h.c.code); return;
+    showDetail(COUNTRIES[key].data.REGIONS[0].id, h.c.code); return;
   }
   if (h.k !== ck) setCountry(h.k);
   const c = codeMap[h.c.code];
