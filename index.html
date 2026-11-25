@@ -363,6 +363,11 @@ body.track-calling .wmk circle { fill: var(--w-call); }
   .tabs[aria-label="Game mode"] button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
   .tabs[aria-label="Game mode"] button:last-child:nth-child(odd) { grid-column: span 2; }
 }
+/* Search stands out from the other tabs: a dark outline and a magnifier */
+#m-search { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 2px solid var(--ink) !important; margin-left: 4px; }
+#m-search svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; }
+#m-search:hover:not([aria-pressed="true"]) { background: color-mix(in srgb, var(--ink) 8%, var(--panel)) !important; }
+@media (max-width: 860px) { #m-search { margin-left: 0; } }
 /* Complete tab */
 .trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
 .trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
@@ -400,7 +405,7 @@ body.track-calling .wmk circle { fill: var(--w-call); }
         <button id="m-pick" aria-pressed="false">Pick the code</button>
         <button id="m-test" aria-pressed="false">Complete</button>
         <button id="m-explore" aria-pressed="false">Explore</button>
-        <button id="m-search" aria-pressed="false">Search</button>
+        <button id="m-search" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search</button>
       </div>
     </div>
   </header>
