@@ -997,7 +997,13 @@ function capAdvance() {
   card.querySelector("#cap-stop").onclick = () => showWorld();
 }
 
-worldBtn.onclick = () => showWorld();
+// Pressing World map again while it is already open scrolls down to the map.
+worldBtn.onclick = () => {
+  if (view === "world" && !capQ) {
+    const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    mapbox.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+  } else showWorld();
+};
 // ---------- Country picker (⌵): every country, with a search bar ----------
 const cBtn = document.getElementById("country-btn"), cPop = document.getElementById("cpop"), cIn = document.getElementById("cq"), cList = document.getElementById("clist");
 let cItems = [], cActive = 0;
