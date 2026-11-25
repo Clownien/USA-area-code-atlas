@@ -368,6 +368,7 @@ body.track-calling .wmk circle { fill: var(--w-call); }
 #m-search svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; }
 #m-search:hover:not([aria-pressed="true"]) { background: color-mix(in srgb, var(--ink) 8%, var(--panel)) !important; }
 @media (max-width: 860px) { #m-search { margin-left: 0; } }
+.wc.outscope, .wmk.outscope { opacity: .12; pointer-events: none; }
 /* Complete tab */
 .trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
 .trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
@@ -843,7 +844,7 @@ function renderCallingCard(info, n) {
 }
 // Parts of the world: the map zooms in and the panel lists that continent's playable countries.
 const CONTINENTS = [
-  ["north", "North America", ["North America"]], ["caribbean", "Caribbean", ["Caribbean"]], ["south", "South America", ["South America"]],
+  ["north", "North America & Caribbean", ["North America", "Caribbean"]], ["south", "South America", ["South America"]],
   ["europe", "Europe", ["Europe"]], ["asia", "Asia & Middle East", ["Caucasus & Middle East", "Asia"]], ["africa", "Africa", ["Africa"]], ["oceania", "Oceania", ["Oceania"]],
 ];
 let worldCont = null;
@@ -949,6 +950,9 @@ const CAPITALS = {
   "South Africa": ["Pretoria", "012"], "Uganda": ["Kampala", "0414"], "Sudan": ["Khartoum", "183"], "Eritrea": ["Asmara", "1"], "Sierra Leone": ["Freetown", "22"],
   "Australia": ["Canberra", "02"], "New Zealand": ["Wellington", "04"],
 };
+// The Caribbean counts as part of "North America & Caribbean".
+const inScope = (ct, scope) => !scope || ct === scope || (scope === "north" && ct === "caribbean");
+const ctOf = n => n === "carib" ? "caribbean" : n === "fguiana" ? "south" : (WORLD.countries.find(c => c.n === n) || WORLD.small.find(m => m.n === n) || {}).ct;
 let capQ = null, dialScope = null, showDialHover = !!load("aca-showdial");
 const capDial = n => { const k = PLAY_NAMES[n]; return k ? (k === "cb" ? "+1" : COUNTRIES[k].dial) : SMALL[n] ? SMALL[n] : NOTES[n] ? NOTES[n][0] : DIAL[n]; };
 // From abroad the leading 0 is dropped, except in Italy.
@@ -962,7 +966,7 @@ const QUIZ = {
     askFind: "Which country's capital uses this area code?", findHelp: "Click the country on the world map. If several capitals share the code, any of them counts.",
     askPick: n => `What is the area code of ${capWhere(n)}?`, hintLabel: "Show the calling code (½ points)", hint: n => `From abroad it is dialled ${capIntl(n)}.`,
     name: capWhere, extra: n => ` From abroad: ${capIntl(n)}.`, item: "capital" },
-  dial: { title: "Calling codes quiz", pool: () => [...WORLD.countries.filter(c => !dialScope || c.ct === dialScope).map(c => c.n), ...WORLD.small.filter(m => !dialScope || m.ct === dialScope).map(m => m.n)].filter(n => !DIAL_SKIP.has(n) && capDial(n)), ans: n => capDial(n).split(" ")[0],
+  dial: { title: "Calling codes quiz", pool: () => [...WORLD.countries.filter(c => inScope(c.ct, dialScope)).map(c => c.n), ...WORLD.small.filter(m => inScope(m.ct, dialScope)).map(m => m.n)].filter(n => !DIAL_SKIP.has(n) && capDial(n)), ans: n => capDial(n).split(" ")[0],
     askFind: "Which country has this calling code?", findHelp: "Click the country on the world map. Small countries are the dots. If several countries share the code, any of them counts.",
     askPick: n => `What is the calling code of ${niceName(n)}?`, hintLabel: "Show a hint (½ points)", hint: n => CAPITALS[n] ? `Its capital is ${CAPITALS[n][0]}.` : `Its name starts with ${niceName(n)[0]}.`,
     name: n => niceName(n), extra: () => "", item: "country" },
@@ -975,9 +979,17 @@ function capZoom(n) {
   const w = Math.max(FULL[2] * 0.3, bb.width * 4, bb.height * 4 * AR), h = w / AR;
   animateTo([bb.x + bb.width / 2 - w / 2, bb.y + bb.height / 2 - h / 2, w, h]);
 }
+// During a continent quiz the map is locked to that continent and the rest of the world fades out.
+function lockScope(scope) {
+  const box = contBox(scope);
+  FULL = box.slice(); AR = box[2] / box[3]; MINW = box[2] * 0.065;
+  cancelAnimationFrame(zoomAnim); goal = box.slice(); applyVB(box);
+  svg.querySelectorAll(".wc[data-w], .wmk[data-w]").forEach(el => el.classList.toggle("outscope", !inScope(ctOf(el.dataset.w), scope)));
+  svg.querySelectorAll(".wmk:not(.small)").forEach(el => el.classList.add("outscope"));
+}
 function startCapitals(m, set = "cap") {
   const Q = QUIZ[set], pool = Q.pool().filter(n => capEl(n));
-  if (set === "dial" && dialScope) animateTo(contBox(dialScope));
+  if (set === "dial" && dialScope) lockScope(dialScope);
   capQ = { set, Q, m, qs: shuffle(pool).slice(0, 10), i: 0, score: 0, streak: 0, misses: [], phase: "ask", hint: false };
   capAsk();
 }
