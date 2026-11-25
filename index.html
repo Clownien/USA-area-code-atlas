@@ -170,6 +170,7 @@ h1 span { color: var(--muted); font-weight: 600; }
 .nocodes summary:hover { color: var(--ink); }
 .infobox { background: var(--bg); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
 .infobox b { font: 800 20px var(--font-display); }
+.infobox.notice { background: color-mix(in srgb, var(--accent) 22%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); }
 @media (max-width: 520px) { .tabs[aria-label="Game mode"] { display: grid !important; grid-template-columns: 1fr 1fr; border-radius: 18px; } .tabs button { padding: 8px 10px; } .tabs[aria-label="Country"] button { flex: 1; } }
 .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--rule); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
 .tabs button { border: 0; background: transparent; color: var(--ink); font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
@@ -721,14 +722,14 @@ function showContinent(key) {
   else { animateTo(FULL); placeSel.value = "all"; }
   renderWorldCard();
 }
-function renderWorldCard(info) {
+function renderWorldCard(info, needCountry) {
   const chip = k => `<button data-k="${k}">${fl(flagKey(k))}${COUNTRIES[k].name}<small>${COUNTRIES[k].dial}</small></button>`;
   const why = info && (info.kind === "none" ? `${info.name} has no area codes. Every phone number there has the same number of digits, and you dial it the same way anywhere in the country.`
     : info.kind === "note" ? info.text
     : info.kind === "fg" ? `French Guiana is part of France. The whole territory uses one area code, 0594, and from abroad you dial +594.`
     : `${info.name}: calling code ${info.dial || "not listed here"}.`);
   const cont = CONTINENTS.find(c => c[0] === worldCont);
-  card.innerHTML = `${info ? `<div class="infobox"><b>${fl(flagOf(info.name) || flagOf(Object.keys(NICE).find(k => NICE[k] === info.name) || ""))}${info.name} <span class="small">${info.dial}</span></b>${info.kind === "none" ? `<p class="small">No area codes</p>` : `<p class="small">${why}</p>`}</div>` : ""}
+  card.innerHTML = `${needCountry ? `<div class="infobox notice" role="status"><b>Choose a country first</b><p class="small">“${needCountry}” works inside a country. Click a green country on the map, choose a continent below, or use the ⌵ list at the top, and it starts there.</p></div>` : ""}${info ? `<div class="infobox"><b>${fl(flagOf(info.name) || flagOf(Object.keys(NICE).find(k => NICE[k] === info.name) || ""))}${info.name} <span class="small">${info.dial}</span></b>${info.kind === "none" ? `<p class="small">No area codes</p>` : `<p class="small">${why}</p>`}</div>` : ""}
     <div><p class="label">World map</p><p class="small" style="margin-top:4px">Click any country on the map, or zoom in on a part of the world:</p></div>
     <div class="chips conts"><button data-cont="" aria-pressed="${!cont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
     ${cont ? (() => { const ks = cont[2].flatMap(g => GROUPS.find(x => x[0] === g)[1]).sort((a, b) => COUNTRIES[a].name.localeCompare(COUNTRIES[b].name));
@@ -1487,7 +1488,14 @@ function showDetail(id, hit) {
 // ---------- Modes and countries ----------
 function setMode(m) {
   setTimeout(applyAreaDim);
-  if (view === "world") { mode = m; return enterCountry(COUNTRIES[load("aca-country")] ? load("aca-country") : "us"); }
+  if (view === "world") {
+    // On the world map only Search works right away; the other modes need a country first.
+    mode = m;
+    for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
+    if (m === "search") { state = {}; searchPick = null; renderSearch().focus({ preventScroll: true }); return; }
+    renderWorldCard(null, { find: "Find the region", pick: "Pick the code", explore: "Explore" }[m]);
+    return;
+  }
   if ((m === "find" || m === "pick") && C.mini) m = "explore";
   mode = m; clearTimeout(state.timer);
   for (const id of ["find", "pick", "explore", "search"]) document.getElementById("m-" + id).setAttribute("aria-pressed", id === m);
