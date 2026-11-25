@@ -97,6 +97,8 @@ h1 span { color: var(--muted); font-weight: 600; }
 .wc { stroke: var(--border); stroke-width: .6; vector-effect: non-scaling-stroke; transition: fill .15s; }
 .wc.play { fill: color-mix(in srgb, var(--good) 50%, var(--land)); cursor: pointer; }
 .wc.play:hover, .wc.play.hot { fill: var(--accent); }
+.wc.one { fill: color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel))); cursor: pointer; }
+.wc.one:hover, .wc.one.hot { fill: color-mix(in srgb, var(--good) 50%, var(--accent) 30%); }
 .wc.info { fill: color-mix(in srgb, var(--rule) 55%, var(--panel)); cursor: pointer; }
 .wc.info:hover, .wc.info.hot { fill: color-mix(in srgb, var(--rule) 95%, var(--panel)); }
 .wc.target { fill: var(--accent) !important; }
@@ -610,6 +612,7 @@ const worldBtn = document.getElementById("b-world"), countrySel = document.getEl
 countrySel.innerHTML = `<option value="" disabled>Choose a country</option>` + GROUPS.map(([g, ks]) => `<optgroup label="${g}">${ks.map(k => `<option value="${k}">${COUNTRIES[k].name}</option>`).join("")}</optgroup>`).join("");
 function worldStatus(c) {
   if (PLAY_NAMES[c.n]) return "play";
+  if (WORLD.caps.some(x => x.n === c.n) || c.n === "N. Cyprus" || c.n === "W. Sahara") return "one";
   if (NO_CODES.has(c.n) || NOTES[c.n]) return "info";
   return c.n === "Antarctica" ? "ant" : "off";
 }
@@ -652,7 +655,7 @@ function renderWorldCard(info) {
     <div class="infobox"><b>Calling codes quiz</b><p class="small">Every country in the world, small ones too: +46 Sweden, +423 Liechtenstein, +976 Mongolia.</p>
       <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>
     <div><p class="label">Choose a country</p><p class="small" style="margin-top:4px">Click a country on the map or pick one below.</p></div>
-    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes, or only a note</span><span><i style="background:var(--ink);border-radius:50%"></i>Capital with a known code</span></div>
+    <div class="legend"><span><i style="background:color-mix(in srgb, var(--good) 50%, var(--land))"></i>In the game</span><span><i style="background:color-mix(in srgb, var(--good) 32%, color-mix(in srgb, var(--accent) 25%, var(--panel)))"></i>One area code for the whole country</span><span><i style="background:color-mix(in srgb, var(--rule) 55%, var(--panel))"></i>No area codes</span><span><i style="background:var(--ink);border-radius:50%"></i>Capital with a known code</span></div>
     <div class="groups">${GROUPS.map(([g, ks]) => `<div><p class="label" style="margin-bottom:6px">${g}</p><div class="chips">${ks.map(chip).join("")}</div></div>`).join("")}
     <details class="nocodes"${info && info.kind === "none" ? " open" : ""}><summary class="label">No area codes (${NO_CODES.size + Object.keys(SMALL).length - Object.keys(SMALL_NOTES).length} countries)</summary><div class="chips quiet" style="margin-top:8px">${[...NO_CODES, ...Object.keys(SMALL).filter(n => !SMALL_NOTES[n])].sort().map(n => `<button data-none="${n}">${niceName(n)}<small>${DIAL[n] || SMALL[n]}</small></button>`).join("")}</div></details>
     <p class="small">Every other country is on the map too: point at one to see its calling code.</p></div>`;
