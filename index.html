@@ -33,6 +33,8 @@
   --w-one: #a9d8bf;
   --w-none: #dde3e9;
   --w-gold: #f2b92b;
+  --blue: #2f7dd1;
+  --w-call: #8bb8e6;
   --shadow: 0 1px 2px rgba(21, 32, 43, .06), 0 10px 28px rgba(21, 32, 43, .07);
   --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif, "Noto Color Emoji";
   --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif, "Noto Color Emoji";
@@ -44,7 +46,7 @@
     --land: #23413a; --land-hover: #2f5a4f; --border: #161e27; --edge: #4e7f70;
     --accent: #ffc247; --accent-ink: #231800; --good: #3dd68c; --bad: #ff6b6e;
     --key: #e7edf3; --key-ink: #0e141b; --water: #111b25;
-    --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a;
+    --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a; --blue: #5aa2f0; --w-call: #2f5f8f;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
     color-scheme: dark;
   }
@@ -54,7 +56,7 @@
   --land: #23413a; --land-hover: #2f5a4f; --border: #161e27; --edge: #4e7f70;
   --accent: #ffc247; --accent-ink: #231800; --good: #3dd68c; --bad: #ff6b6e;
   --key: #e7edf3; --key-ink: #0e141b; --water: #111b25;
-  --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a;
+  --w-play: #3e9c76; --w-one: #2e5a49; --w-none: #26313d; --w-gold: #e0a92a; --blue: #5aa2f0; --w-call: #2f5f8f;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .28);
   color-scheme: dark;
 }
@@ -325,6 +327,34 @@ h1 span { color: var(--good); }
 .meta div { min-width: 0; }
 .meta .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 420px) { .keys.k4 span { width: 54px; height: 68px; font-size: 38px; } .keys.k5 span { width: 46px; height: 60px; font-size: 32px; } }
+/* Start screen: two big choices */
+.start { display: grid; gap: 18px; justify-items: center; padding-block: 12px 24px; }
+.start h2 { font: 800 clamp(24px, 3.2vw, 34px)/1.1 var(--font-display); margin: 0; text-align: center; text-wrap: balance; }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; width: min(100%, 900px); }
+@media (max-width: 700px) { .choices { grid-template-columns: minmax(0, 1fr); } }
+.choice { --tone: var(--good); display: grid; gap: 12px; justify-items: start; text-align: left; padding: 26px 24px; border-radius: 20px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); box-shadow: var(--shadow); cursor: pointer; font: inherit; transition: transform .15s, box-shadow .15s, border-color .15s; position: relative; overflow: hidden; }
+.choice::before { content: ""; position: absolute; inset: 0 0 auto; height: 6px; background: var(--tone); }
+.choice.calling { --tone: var(--blue); }
+.choice:hover { transform: translateY(-3px); border-color: var(--tone); box-shadow: 0 16px 36px color-mix(in srgb, var(--tone) 22%, transparent); }
+.choice:focus-visible { outline: 3px solid var(--tone); outline-offset: 3px; }
+.mini-keys { display: flex; gap: 6px; }
+.mini-keys b { width: 46px; height: 56px; display: grid; place-items: center; border-radius: 12px; font: 600 32px var(--font-mono); color: #fff; background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 85%, #fff), var(--tone)); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .14); }
+.ct { font: 800 26px/1.1 var(--font-display); }
+.cd { color: var(--muted); max-width: 46ch; }
+.cd strong { color: var(--ink); font-family: var(--font-mono); }
+.cf { font: 600 12px var(--font-body); letter-spacing: .04em; color: var(--tone); }
+.trackbtn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; box-shadow: var(--shadow); }
+.trackbtn:hover { border-color: var(--ink); }
+body.on-start .board, body.on-start .controls { display: none; }
+body:not(.on-start) .start { display: none; }
+body.track-calling .tabs[aria-label="Game mode"] { display: none; }
+body.track-calling h1 span { color: var(--blue); }
+body.track-calling .wc.play, body.track-calling .wc.one, body.track-calling .wc.info, body.track-calling .wc.gold, body.track-calling .wc.off { fill: var(--w-call); cursor: pointer; }
+body.track-calling .wc:hover, body.track-calling .wc.hot { fill: color-mix(in srgb, var(--w-call) 70%, var(--ink)); }
+body.track-calling .wmk circle { fill: var(--w-call); }
+@media (max-width: 860px) { .pickrow { flex-wrap: wrap; } .trackbtn { flex: 1 1 100%; justify-content: center; } }
+.callbox { display: grid; gap: 4px; }
+.bigdial { font: 700 44px/1 var(--font-mono); color: var(--blue); }
 /* Complete tab */
 .trophy { text-align: center; display: grid; gap: 6px; justify-items: center; padding: 8px 0; }
 .trophy > span { font-size: 64px; line-height: 1; font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; animation: pop .5s ease both; }
@@ -342,10 +372,11 @@ h1 span { color: var(--good); }
   <header>
     <div>
       <h1>Area Code Atlas <span id="dial">· +1</span></h1>
-      <p class="sub">Learn where area codes ring around the world. Start on the world map and pick a country. Each country is split into area code regions, shown with dashed lines.</p>
+      <p class="sub" id="sub">Learn the phone codes of the world: area codes inside each country, and calling codes for every country.</p>
     </div>
     <div class="controls">
       <div class="pickrow">
+        <button class="trackbtn" id="b-track" title="Switch between area codes and calling codes"><span id="track-name">Area codes</span><span aria-hidden="true">⇄</span></button>
         <button class="worldbtn" id="b-world" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>World map</button>
         <div class="cpick">
           <button id="country-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="cpop"><span id="country-name">Choose a country</span><span class="chev" aria-hidden="true">⌵</span></button>
@@ -365,7 +396,24 @@ h1 span { color: var(--good); }
       </div>
     </div>
   </header>
-  <div class="board">
+  <section class="start" id="start" aria-labelledby="start-h">
+    <h2 id="start-h">What do you want to learn?</h2>
+    <div class="choices">
+      <button class="choice area" data-track="area">
+        <span class="mini-keys" aria-hidden="true"><b>0</b><b>8</b></span>
+        <span class="ct">Area codes</span>
+        <span class="cd">The codes inside a country that show where a number rings: <strong>08</strong> Stockholm, <strong>212</strong> New York, <strong>020</strong> London.</span>
+        <span class="cf">99 countries with maps · Find the region · Pick the code · Complete</span>
+      </button>
+      <button class="choice calling" data-track="calling">
+        <span class="mini-keys" aria-hidden="true"><b>+</b><b>4</b><b>6</b></span>
+        <span class="ct">Calling codes</span>
+        <span class="cd">The code for a whole country that you dial from abroad: <strong>+46</strong> Sweden, <strong>+1</strong> USA, <strong>+44</strong> United Kingdom.</span>
+        <span class="cf">Every country in the world · Find the country · Pick the code</span>
+      </button>
+    </div>
+  </section>
+  <div class="board" id="board">
     <div class="mapbox" id="mapbox">
       <div class="zoom" role="group" aria-label="Map zoom"><button class="pm" id="z-out" aria-label="Zoom out">−</button><button class="pm" id="z-in" aria-label="Zoom in">+</button>
         <select id="z-place" aria-label="Jump to a part of the map"></select></div>
@@ -745,7 +793,7 @@ function worldStatus(c) {
 function showWorld(info) {
   tip.hidden = true; view = "world"; worldCont = null; clearTimeout(state.timer); state = {}; if (capQ) clearTimeout(capQ.timer); capQ = null;
   worldBtn.setAttribute("aria-pressed", "true"); countryName.textContent = "Choose a country";
-  document.getElementById("dial").textContent = "· World";
+  document.getElementById("dial").textContent = track === "calling" ? "· Calling codes" : "· World";
   let paths = "";
   for (const c of WORLD.countries) {
     const st = worldStatus(c);
@@ -767,6 +815,16 @@ function worldInfo(n) {
   if (SMALL[n]) return SMALL_NOTES[n] ? { kind: "note", name: n, dial: SMALL[n], text: SMALL_NOTES[n] } : { kind: "none", name: n, dial: SMALL[n] };
   if (PLAY_NAMES[n]) { const k = PLAY_NAMES[n], K = COUNTRIES[k]; return { k, name: k === "cb" ? niceName(n) : K.name, dial: K.dial }; }
   return { kind: NO_CODES.has(n) ? "none" : "later", name: niceName(n), dial: DIAL[n] || "" };
+}
+function renderCallingCard(info, n) {
+  const dial = info ? (n ? capDial(n) : null) || info.dial : "";
+  card.innerHTML = `${info ? `<div class="infobox callbox"><b>${fl(flagOf(n) || flagOf(info.name))}${info.name}</b><span class="bigdial">${dial || "–"}</span><p class="small">${CAPITALS[n] ? `Capital: ${CAPITALS[n][0]}. ` : ""}${dial ? `From abroad you dial ${dial} and then the number.` : ""}</p></div>` : ""}
+    <div><p class="label">Calling codes</p><p class="small" style="margin-top:4px">Every country has one. Point at a country to see its code, or zoom in on a part of the world:</p></div>
+    <div class="chips conts"><button data-cont="" aria-pressed="${!worldCont}">Whole world</button>${CONTINENTS.map(([k, label]) => `<button data-cont="${k}" aria-pressed="${worldCont === k}">${label}</button>`).join("")}</div>
+    <div class="infobox"><b>Calling codes quiz</b><p class="small">${QUIZ.dial.pool().length} countries and territories, small ones too. Small countries are the dots on the map.</p>
+      <div class="row"><button class="btn primary" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></div>`;
+  card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap, b.dataset.set));
+  card.querySelectorAll("[data-cont]").forEach(b => b.onclick = () => showContinent(b.dataset.cont || null));
 }
 // Parts of the world: the map zooms in and the panel lists that continent's playable countries.
 const CONTINENTS = [
@@ -794,7 +852,8 @@ function showContinent(key) {
   else { animateTo(FULL); placeSel.value = "all"; }
   renderWorldCard();
 }
-function renderWorldCard(info) {
+function renderWorldCard(info, worldName) {
+  if (track === "calling") return renderCallingCard(info, worldName);
   const chip = k => `<button data-k="${k}">${fl(flagKey(k))}${COUNTRIES[k].name}${isComplete(k) ? " 🏆" : ""}<small>${COUNTRIES[k].dial}</small></button>`;
   const why = info && (info.kind === "none" ? `${info.name} has no area codes. Every phone number there has the same number of digits, and you dial it the same way anywhere in the country.`
     : info.kind === "note" ? info.text
@@ -809,9 +868,9 @@ function renderWorldCard(info) {
       <div class="chips" style="margin-top:10px">${ks.map(chip).join("")}</div>
       <p class="small" style="margin-top:8px">The other countries on the map open too. Use the ⌵ list at the top to find any country by name.</p></details>`; })() : ""}
     <div class="legend"><span><i style="background:var(--w-play)"></i>Full area-code map</span><span><i style="background:var(--w-one)"></i>One code for the whole country</span><span><i style="background:var(--w-none)"></i>No area codes</span>${completed.size ? `<span><i style="background:var(--w-gold)"></i>Completed 🏆</span>` : ""}</div>
-    <details class="quizzes"><summary class="label">Quizzes on the world map</summary>
+    <details class="quizzes"><summary class="label">Capitals quiz on the world map</summary>
       <div class="qgrid"><b>Capitals</b><button class="btn" data-cap="find" data-set="cap">Find the country</button><button class="btn" data-cap="pick" data-set="cap">Pick the code</button>
-      <b>Calling codes</b><button class="btn" data-cap="find" data-set="dial">Find the country</button><button class="btn" data-cap="pick" data-set="dial">Pick the code</button></div></details>`;
+</div></details>`;
   card.querySelectorAll("[data-k]").forEach(b => b.onclick = () => enterCountry(b.dataset.k));
   card.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => startCapitals(b.dataset.cap, b.dataset.set));
   card.querySelectorAll("[data-cont]").forEach(b => b.onclick = () => showContinent(b.dataset.cont || null));
@@ -1009,12 +1068,12 @@ const cBtn = document.getElementById("country-btn"), cPop = document.getElementB
 let cItems = [], cActive = 0;
 function allCountries() {
   const out = [], seen = new Set();
-  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ name: COUNTRIES[k].name, flag: flagKey(k), dial: COUNTRIES[k].dial, kind: "play", done: isComplete(k), go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
+  for (const [, ks] of GROUPS) for (const k of ks) { out.push({ wn: k === "cb" ? "Jamaica" : Object.keys(PLAY_NAMES).find(n => PLAY_NAMES[n] === k), name: COUNTRIES[k].name, flag: flagKey(k), dial: COUNTRIES[k].dial, kind: "play", done: isComplete(k), go: () => enterCountry(k) }); seen.add(COUNTRIES[k].name); }
   for (const c of WORLD.countries) {
     if (PLAY_NAMES[c.n] || c.n === "Antarctica" || c.n === "Fr. S. Antarctic Lands") continue;
     const st = worldStatus(c), nm = niceName(c.n);
     if (seen.has(nm)) continue; seen.add(nm);
-    out.push({ name: nm, flag: flagOf(c.n), dial: capDial(c.n) || "", kind: st === "one" ? "one" : "none", go: st === "one" ? () => { const k = ensureMini(c.n); if (k) { setCountry(k); setMode("explore"); } } : () => { showWorld(worldInfo(c.n)); hotWorld(c.n); } });
+    out.push({ wn: c.n, name: nm, flag: flagOf(c.n), dial: capDial(c.n) || "", kind: st === "one" ? "one" : "none", go: st === "one" ? () => { const k = ensureMini(c.n); if (k) { setCountry(k); setMode("explore"); } } : () => { showWorld(worldInfo(c.n)); hotWorld(c.n); } });
   }
   for (const n of Object.keys(SMALL)) if (!seen.has(n)) out.push({ name: n, flag: flagOf(n), dial: SMALL[n], kind: "none", go: () => { showWorld(worldInfo(n)); hotWorld(n); } });
   return out.sort((a, b) => a.name.localeCompare(b.name));
@@ -1031,7 +1090,16 @@ function renderCList() {
 }
 function openCPop() { cPop.hidden = false; cBtn.setAttribute("aria-expanded", "true"); cIn.value = ""; renderCList(); cIn.focus(); }
 function closeCPop() { cPop.hidden = true; cBtn.setAttribute("aria-expanded", "false"); }
-function chooseC(i) { const c = cItems[i]; if (!c) return; closeCPop(); c.go(); }
+function chooseC(i) {
+  const c = cItems[i]; if (!c) return; closeCPop();
+  if (track === "calling") {
+    const n = c.wn || c.name;
+    if (view !== "world") showWorld();
+    renderWorldCard(worldInfo(n), n); hotWorld(n);
+    return;
+  }
+  c.go();
+}
 cBtn.onclick = () => (cPop.hidden ? openCPop() : closeCPop());
 cIn.addEventListener("input", renderCList);
 cIn.addEventListener("keydown", e => {
@@ -1158,6 +1226,7 @@ svg.addEventListener("click", e => {
     if (!w) return;
     if (capQ) { if (capQ.m === "find" && capQ.phase === "ask" && (w.classList.contains("wc") || w.classList.contains("small"))) capFind(w.dataset.w); return; }
     const info = worldInfo(w.dataset.w);
+    if (track === "calling") { renderWorldCard(info, w.dataset.w); hotWorld(w.dataset.w); return; }
     if (info.k) return enterCountry(info.k);
     const isOne = w.classList.contains("wc") && worldStatus({ n: w.dataset.w }) === "one";
     const mk = isOne ? ensureMini(w.dataset.w) : null;
@@ -1181,6 +1250,7 @@ svg.addEventListener("mousemove", e => {
     if (!w) { tip.hidden = true; return; }
     const info = worldInfo(w.dataset.w), box = mapbox.getBoundingClientRect(), n = w.dataset.w;
     if (capQ) tip.textContent = capQ.phase === "ask" ? info.name : capQ.set === "dial" ? `${info.name} · ${capDial(n) || ""}` : CAPITALS[n] ? `${info.name} · ${CAPITALS[n][0]} · ${CAPITALS[n][1]}` : info.name;
+    else if (track === "calling") { const f = flagOf(n) || flagOf(info.name); tip.textContent = `${f ? f + " " : ""}${info.name} · ${capDial(n) || info.dial || "?"}`; }
     else { const f = flagOf(n) || flagOf(info.name); tip.textContent = `${f ? f + " " : ""}${info.name}${info.dial ? " · " + info.dial : ""}${info.k ? " · click to play" : worldStatus({ n }) === "one" ? " · click to open" : ""}`; }
     tip.hidden = false;
     tip.style.left = Math.min(box.width - 80, Math.max(80, e.clientX - box.left)) + "px"; tip.style.top = (e.clientY - box.top) + "px";
@@ -1668,7 +1738,29 @@ function setMode(m) {
   else newGame();
 }
 for (const id of MODES) { document.getElementById("m-" + id).onclick = () => setMode(id); document.getElementById("m-" + id).setAttribute("aria-pressed", "false"); }
+// ---------- Start screen: area codes or calling codes ----------
+let track = "area";
+const startEl = document.getElementById("start");
+function showStart() {
+  document.body.classList.add("on-start"); tip.hidden = true;
+  document.getElementById("sub").textContent = "Learn the phone codes of the world: area codes inside each country, and calling codes for every country.";
+  document.getElementById("dial").textContent = "";
+  startEl.querySelector(".choice." + (track === "calling" ? "calling" : "area")).focus({ preventScroll: true });
+}
+function chooseTrack(t) {
+  track = t;
+  document.body.classList.remove("on-start");
+  document.body.classList.toggle("track-calling", t === "calling");
+  document.getElementById("track-name").textContent = t === "calling" ? "Calling codes" : "Area codes";
+  document.getElementById("sub").textContent = t === "calling"
+    ? "Every country has a calling code that you dial from abroad. Point at a country to see it, or play the quiz."
+    : "Learn where area codes ring. Pick a country on the world map. Each country is split into area-code regions, shown with dashed lines.";
+  showWorld();
+}
+startEl.querySelectorAll("[data-track]").forEach(b => b.onclick = () => chooseTrack(b.dataset.track));
+document.getElementById("b-track").onclick = () => { if (capQ) clearTimeout(capQ.timer); capQ = null; showStart(); };
 showWorld();
+showStart();
 </script>
 
 </body>

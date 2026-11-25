@@ -1,6 +1,6 @@
 # Area Code Atlas
 
-A map game for learning telephone area codes region by region, around the world.
+A map game for learning telephone area codes region by region around the world, and the calling code of every country. The game starts with a choice: Area codes or Calling codes.
 
 **Play:** https://clownien.github.io/USA-area-code-atlas/
 
